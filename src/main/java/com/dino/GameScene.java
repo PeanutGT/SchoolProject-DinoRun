@@ -135,8 +135,9 @@ public class GameScene {
         });
 
         menuButtonGameOver = new Button("返回主選單");
-        menuButtonGameOver.setLayoutX(400);
-        menuButtonGameOver.setLayoutY(220);
+        // 初始位置留空，於 gameOver() 時動態置中於重開按鈕下方
+        menuButtonGameOver.setLayoutX(0);
+        menuButtonGameOver.setLayoutY(0);
         menuButtonGameOver.setVisible(false);
         menuButtonGameOver.setOnAction(e -> {
             if (timer != null) timer.stop();
@@ -426,7 +427,21 @@ public class GameScene {
         dino.die();
         gameOverImage.setVisible(true);
         restartImage.setVisible(true);
-        if (menuButtonGameOver != null) menuButtonGameOver.setVisible(true);
+        if (menuButtonGameOver != null) {
+            // 強制計算大小以取得正確寬度，然後置中於 restartImage 正下方
+            menuButtonGameOver.applyCss();
+            menuButtonGameOver.layout();
+            double btnWidth = menuButtonGameOver.getWidth();
+            double btnHeight = menuButtonGameOver.getHeight();
+            double rx = restartImage.getX();
+            double rwidth = restartImage.getBoundsInParent().getWidth();
+            double rheight = restartImage.getBoundsInParent().getHeight();
+            double btnX = rx + rwidth / 2.0 - btnWidth / 2.0;
+            double btnY = restartImage.getY() + rheight + 8; // 8px 間距
+            menuButtonGameOver.setLayoutX(btnX);
+            menuButtonGameOver.setLayoutY(btnY);
+            menuButtonGameOver.setVisible(true);
+        }
     }
 
     private double getRightMostObstacleX() {
