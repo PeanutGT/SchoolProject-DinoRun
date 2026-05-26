@@ -4,7 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javafx.animation.AnimationTimer;
+import javafx.animation.FadeTransition;
+import javafx.animation.TranslateTransition;
 import javafx.geometry.Pos;
+import javafx.geometry.Bounds;
+import javafx.util.Duration;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -39,6 +43,7 @@ public class GameScene {
 
     private int score = 0;
     private int lastScoreSound = 0;
+    @SuppressWarnings("unused")
     private int frameCount = 0;
 
     // 引入 GameConfig 常數
@@ -79,7 +84,7 @@ public class GameScene {
     private long milkFogStartTime = 0;
     private long screenFlashStartTime = 0;
 
-    private boolean spacePressed = false;
+    private boolean jumpPressed = false;
     private boolean jumpAfterRestart = false;
 
     // Game Clock
@@ -91,9 +96,72 @@ public class GameScene {
     private final double maxSpeed = GameConfig.MAX_SPEED;
 
     private double distance = 0;
-
+    
+    private ImageView coinIconHud;
+    private Label coinCountLabel;
     public GameScene(DinoMain dinoMain) {
         this(dinoMain, GameConfig.selectedCharacter);
+    }
+
+    private void createCoinHud() {
+        coinIconHud = new ImageView(ResourceManager.getImage("tool/coin.png"));
+        coinIconHud.setSmooth(true);
+        coinIconHud.setFitWidth(28);
+        coinIconHud.setPreserveRatio(true);
+
+        coinCountLabel = new Label(String.valueOf(SaveManager.getMoney()));
+        coinCountLabel.setFont(Font.font("Menlo", 18));
+        coinCountLabel.setTextFill(Color.BLACK);
+
+        javafx.scene.layout.HBox coinHud = new javafx.scene.layout.HBox(6, coinIconHud, coinCountLabel);
+        coinHud.setAlignment(Pos.CENTER_RIGHT);
+        coinHud.setLayoutX(screenWidth - 130);
+        coinHud.setLayoutY(12);
+
+        root.getChildren().add(coinHud);
+    }
+
+    private void updateCoinHud() {
+        if (coinCountLabel != null) {
+            coinCountLabel.setText(String.valueOf(SaveManager.getMoney()));
+        }
+    }
+
+    private void showCoinPopup(double x, double y) {
+        ImageView coin = new ImageView(ResourceManager.getImage("tool/coin.png"));
+        coin.setFitWidth(24);
+        coin.setPreserveRatio(true);
+        coin.setLayoutX(x - 12);
+        coin.setLayoutY(y - 20);
+
+        Label plus = new Label("+1$");
+        plus.setFont(Font.font(16));
+        plus.setTextFill(Color.web("#FFCC00"));
+        plus.setLayoutX(x + 10);
+        plus.setLayoutY(y - 18);
+
+        root.getChildren().addAll(coin, plus);
+
+        TranslateTransition tt = new TranslateTransition(Duration.millis(800), coin);
+        tt.setByY(-50);
+        FadeTransition ft = new FadeTransition(Duration.millis(800), coin);
+        ft.setFromValue(1.0);
+        ft.setToValue(0.0);
+
+        TranslateTransition tt2 = new TranslateTransition(Duration.millis(800), plus);
+        tt2.setByY(-50);
+        FadeTransition ft2 = new FadeTransition(Duration.millis(800), plus);
+        ft2.setFromValue(1.0);
+        ft2.setToValue(0.0);
+
+        tt.setOnFinished(ev -> {
+            root.getChildren().removeAll(coin, plus);
+        });
+
+        tt.play();
+        ft.play();
+        tt2.play();
+        ft2.play();
     }
 
     public GameScene(DinoMain dinoMain, String character) {
@@ -188,6 +256,9 @@ public class GameScene {
                 scoreDisplay.getView(),
                 skillDisplay.getView()
         );
+
+        // 建立並顯示右上角金幣 HUD
+        createCoinHud();
 
         createPauseOverlay();
         root.getChildren().add(pauseOverlay);
@@ -432,7 +503,6 @@ public class GameScene {
             menuButtonGameOver.applyCss();
             menuButtonGameOver.layout();
             double btnWidth = menuButtonGameOver.getWidth();
-            double btnHeight = menuButtonGameOver.getHeight();
             double rx = restartImage.getX();
             double rwidth = restartImage.getBoundsInParent().getWidth();
             double rheight = restartImage.getBoundsInParent().getHeight();
@@ -591,8 +661,8 @@ public class GameScene {
             }
             if (isPaused) return;
 
-            if (e.getCode() == KeyCode.SPACE && !spacePressed) {
-                spacePressed = true;
+            if (e.getCode() == KeyCode.W && !jumpPressed) {
+                jumpPressed = true;
                 if (waitingToStart) {
                     waitingToStart = false;
                     if (dino.jump()) {
@@ -615,7 +685,7 @@ public class GameScene {
             if (waitingToStart) {
                 return;
             }
-            if (e.getCode() == KeyCode.DOWN && !gameOver) {
+            if (e.getCode() == KeyCode.S && !gameOver) {
                 dino.pressDown();
             }
 
@@ -624,27 +694,6 @@ public class GameScene {
                 GameConfig.goldenAppleCount--;
                 dino.healToFull();
                 heartDisplay.update(dino.getLives());
-                skillDisplay.update();
-            } else if (e.getCode() == KeyCode.W && GameConfig.milkBucketCount > 0) {
-                GameConfig.milkBucketCount--;
-                distance += GameConfig.MILK_SCORE_BONUS * 50;
-                milkFog.setVisible(true);
-                milkFogStartTime = activeGameTime;
-                skillDisplay.update();
-            } else if (e.getCode() == KeyCode.E && GameConfig.enchantedBookCount > 0) {
-                GameConfig.enchantedBookCount--;
-                dino.addExtraJump();
-                SoundManager.playScore(); // 播放一個獲得 buff 的音效
-                skillDisplay.update();
-            } else if (e.getCode() == KeyCode.R && GameConfig.barrierCount > 0) {
-                GameConfig.barrierCount--;
-                barrierActive = true;
-                barrierStartTime = activeGameTime;
-                dino.getView().setOpacity(0.8);
-                skillDisplay.update();
-            } else if (e.getCode() == KeyCode.F && GameConfig.woodenSwordCount > 0) {
-                GameConfig.woodenSwordCount--;
-                clearObstaclesInFront();
                 skillDisplay.update();
             }
 
@@ -663,13 +712,13 @@ public class GameScene {
         scene.setOnKeyReleased(e -> {
             if (isPaused) return;
 
-            if (e.getCode() == KeyCode.SPACE) {
-                spacePressed = false;
+            if (e.getCode() == KeyCode.W) {
+                jumpPressed = false;
                 if (!gameOver) {
                     dino.releaseJump();
                 }
             }
-            if (e.getCode() == KeyCode.DOWN && !gameOver) {
+            if (e.getCode() == KeyCode.S && !gameOver) {
                 dino.releaseDown();
             }
         });
@@ -748,18 +797,19 @@ public class GameScene {
     }
 
     private void giveRandomItem() {
-        int rand = (int)(Math.random() * 5);
-        switch (rand) {
-            case 0: GameConfig.goldenAppleCount++; break;
-            case 1: GameConfig.milkBucketCount++; break;
-            case 2: GameConfig.enchantedBookCount++; break;
-            case 3: GameConfig.barrierCount++; break;
-            case 4: GameConfig.woodenSwordCount++; break;
-        }
+        // 改為直接給予玩家局外金錢（1$）
+        SaveManager.addMoney(1);
         skillDisplay.update();
-        SoundManager.playScore(); 
+        SoundManager.playScore();
+        updateCoinHud();
+        // 在角色位置顯示金幣跳起來的動畫
+        Bounds b = dino.getHitBoxBounds();
+        double popupX = b.getMinX() + b.getWidth() / 2.0;
+        double popupY = b.getMinY();
+        showCoinPopup(popupX, popupY);
     }
 
+    @SuppressWarnings("unused")
     private void clearObstaclesInFront() {
         double dinoMaxX = dino.getHitBoxBounds().getMaxX();
         double attackRangeMaxX = dinoMaxX + GameConfig.SWORD_ATTACK_RANGE;

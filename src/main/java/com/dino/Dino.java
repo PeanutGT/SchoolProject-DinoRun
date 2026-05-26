@@ -15,6 +15,7 @@ public class Dino {
     private Image[] runImages;
     private Image[] jumpImages;
     private Image runImage1;
+    @SuppressWarnings("unused")
     private Image runImage2;
     private Image jumpImage;
     private Image fallImage;

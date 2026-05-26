@@ -24,7 +24,8 @@
                   <Button mnemonicParsing="false" onAction="#startCoopGame" prefWidth="200.0" text="雙人合作" />
                   <Button mnemonicParsing="false" onAction="#startVersusGame" prefWidth="200.0" text="雙人對戰" />
                   <Button mnemonicParsing="false" onAction="#openSettings" prefWidth="200.0" text="遊戲設定" />
-                  <Button mnemonicParsing="false" onAction="#exitGame" prefWidth="200.0" text="離開遊戲" />
+                     <Button mnemonicParsing="false" onAction="#openShop" prefWidth="200.0" text="商店" />
+                     <Button mnemonicParsing="false" onAction="#exitGame" prefWidth="200.0" text="離開遊戲" />
                </children>
             </VBox>
          </children>

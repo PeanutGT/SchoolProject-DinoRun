@@ -21,6 +21,7 @@ public class Boss {
     private Image[] walkFrames;
     private Rectangle hitBox;
 
+    @SuppressWarnings("unused")
     private int hp = GameConfig.BOSS_HP;
     private long startTime;
     private long stateTimer;
@@ -222,6 +223,7 @@ public class Boss {
         private Group pGroup;
         private Rectangle pHitBox;
         private double pX, pY;
+        @SuppressWarnings("unused")
         private double pSpeed;
 
         private ImageView pImageView;

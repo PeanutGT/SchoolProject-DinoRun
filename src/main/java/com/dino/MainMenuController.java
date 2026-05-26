@@ -91,6 +91,42 @@ public class MainMenuController {
     }
 
     @FXML
+    private void openShop() {
+        stopBackgroundAnimation();
+        menuContent.getChildren().clear();
+
+        Label label = new Label("商店");
+        label.setFont(Font.font(24));
+
+        Label balanceLabel = new Label("目前金錢: " + SaveManager.getMoney() + "$");
+        balanceLabel.setFont(Font.font(18));
+
+        VBox shopBox = new VBox(12);
+        shopBox.setAlignment(Pos.CENTER);
+
+        // Placeholder item - user will provide images later
+        Button buyHealth = new Button("購買：Max HP +1 (成本 5$)");
+        buyHealth.setOnAction(e -> {
+            int money = SaveManager.getMoney();
+            if (money >= 5) {
+                SaveManager.addMoney(-5);
+                balanceLabel.setText("目前金錢: " + SaveManager.getMoney() + "$");
+                // Apply effect later; for now just acknowledge purchase
+            }
+        });
+
+        Button backButton = new Button("返回主選單");
+        backButton.setOnAction(e -> {
+            showMainButtons();
+            startBackgroundAnimation();
+        });
+
+        shopBox.getChildren().addAll(balanceLabel, buyHealth, backButton);
+
+        menuContent.getChildren().addAll(label, shopBox);
+    }
+
+    @FXML
     private void exitGame() {
         Platform.exit();
     }

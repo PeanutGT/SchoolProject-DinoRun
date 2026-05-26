@@ -14,31 +14,19 @@ public class SkillDisplay {
 
     private HBox root;
     private Label appleCountLabel;
-    private Label milkCountLabel;
-    private Label bookCountLabel;
-    private Label barrierCountLabel;
-    private Label swordCountLabel;
 
     public SkillDisplay() {
-        root = new HBox(40);
+        root = new HBox(10);
         root.setAlignment(Pos.CENTER);
         
         // 置於畫面底部中央
-        root.setLayoutX(GameConfig.SCREEN_WIDTH / 2 - 175); 
+        root.setLayoutX(GameConfig.SCREEN_WIDTH / 2 - 25); 
         root.setLayoutY(GameConfig.SCREEN_HEIGHT - 80);
 
         appleCountLabel = new Label("0");
-        milkCountLabel = new Label("0");
-        bookCountLabel = new Label("0");
-        barrierCountLabel = new Label("0");
-        swordCountLabel = new Label("0");
 
         root.getChildren().addAll(
-            createSlot("tool/golden_apple.png", "Q", appleCountLabel),
-            createSlot("tool/milk_bucket.png", "W", milkCountLabel),
-            createSlot("tool/enchanted_book.png", "E", bookCountLabel),
-            createSlot("tool/barrier.png", "R", barrierCountLabel),
-            createSlot("tool/wooden_sword.png", "F", swordCountLabel)
+            createSlot("tool/golden_apple.png", "Q", appleCountLabel)
         );
         
         update();
@@ -67,10 +55,6 @@ public class SkillDisplay {
 
     public void update() {
         appleCountLabel.setText(String.valueOf(GameConfig.goldenAppleCount));
-        milkCountLabel.setText(String.valueOf(GameConfig.milkBucketCount));
-        bookCountLabel.setText(String.valueOf(GameConfig.enchantedBookCount));
-        barrierCountLabel.setText(String.valueOf(GameConfig.barrierCount));
-        swordCountLabel.setText(String.valueOf(GameConfig.woodenSwordCount));
     }
 
     public HBox getView() {

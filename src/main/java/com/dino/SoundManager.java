@@ -2,8 +2,6 @@ package com.dino;
 
 import javafx.scene.media.AudioClip;
 
-import java.io.File;
-
 public class SoundManager {
 
     private static AudioClip jumpSound;
