@@ -53,6 +53,7 @@ public class GameScene {
 
     private ImageView gameOverImage;
     private ImageView restartImage;
+    private Button menuButtonGameOver;
     private boolean gameOver = false;
 
     private boolean bossPhase = false;
@@ -133,6 +134,15 @@ public class GameScene {
             }
         });
 
+        menuButtonGameOver = new Button("返回主選單");
+        menuButtonGameOver.setLayoutX(400);
+        menuButtonGameOver.setLayoutY(220);
+        menuButtonGameOver.setVisible(false);
+        menuButtonGameOver.setOnAction(e -> {
+            if (timer != null) timer.stop();
+            dinoMain.showMainMenu();
+        });
+
         scoreDisplay = new ScoreDisplay();
         heartDisplay = new HeartDisplay();
         skillDisplay = new SkillDisplay();
@@ -156,6 +166,7 @@ public class GameScene {
                 cloud3,
                 gameOverImage,
                 restartImage,
+            menuButtonGameOver,
                 ground1,
                 ground2,
                 dino.getView()
@@ -415,6 +426,7 @@ public class GameScene {
         dino.die();
         gameOverImage.setVisible(true);
         restartImage.setVisible(true);
+        if (menuButtonGameOver != null) menuButtonGameOver.setVisible(true);
     }
 
     private double getRightMostObstacleX() {
@@ -703,6 +715,7 @@ public class GameScene {
 
         gameOverImage.setVisible(false);
         restartImage.setVisible(false);
+        if (menuButtonGameOver != null) menuButtonGameOver.setVisible(false);
 
         dino.reset();
         heartDisplay.update(dino.getLives());
