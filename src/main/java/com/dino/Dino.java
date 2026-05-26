@@ -333,6 +333,10 @@ public class Dino {
         extraJumps++;
     }
 
+    public int getExtraJumps() {
+        return extraJumps;
+    }
+
     public void healToFull() {
         lives = 3;
     }
