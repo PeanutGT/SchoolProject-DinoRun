@@ -553,7 +553,13 @@ public class GameScene {
 
         scene.setOnKeyPressed(e -> {
             if (e.getCode() == KeyCode.ESCAPE) {
-                togglePause();
+                // Allow returning to main menu when game is over; otherwise toggle pause
+                if (gameOver) {
+                    if (timer != null) timer.stop();
+                    dinoMain.showMainMenu();
+                } else {
+                    togglePause();
+                }
                 return;
             }
             if (isPaused) return;
