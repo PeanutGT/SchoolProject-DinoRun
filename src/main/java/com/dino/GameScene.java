@@ -53,6 +53,7 @@ public class GameScene {
 
     private ImageView gameOverImage;
     private ImageView restartImage;
+    private Button menuButtonGameOver;
     private boolean gameOver = false;
 
     private boolean bossPhase = false;
@@ -133,6 +134,16 @@ public class GameScene {
             }
         });
 
+        menuButtonGameOver = new Button("返回主選單");
+        // 初始位置留空，於 gameOver() 時動態置中於重開按鈕下方
+        menuButtonGameOver.setLayoutX(0);
+        menuButtonGameOver.setLayoutY(0);
+        menuButtonGameOver.setVisible(false);
+        menuButtonGameOver.setOnAction(e -> {
+            if (timer != null) timer.stop();
+            dinoMain.showMainMenu();
+        });
+
         scoreDisplay = new ScoreDisplay();
         heartDisplay = new HeartDisplay();
         skillDisplay = new SkillDisplay();
@@ -156,6 +167,7 @@ public class GameScene {
                 cloud3,
                 gameOverImage,
                 restartImage,
+            menuButtonGameOver,
                 ground1,
                 ground2,
                 dino.getView()
@@ -346,18 +358,12 @@ public class GameScene {
             }
         }
 
-        if (bossPhase && !bosses.isEmpty()) {
-            Iterator<Boss> bossIterator = bosses.iterator();
-            while (bossIterator.hasNext()) {
-                Boss b = bossIterator.next();
-                b.update(speed, activeGameTime, dtSeconds);
-                if (b.isDefeated(activeGameTime)) {
-                    b.removeAllProjectiles();
-                    bossIterator.remove();
-                }
-            }
-            if (bosses.isEmpty()) {
+        if (bossPhase && boss != null) {
+            boss.update(speed, activeGameTime, dtSeconds);
+            if (boss.isDefeated(activeGameTime)) {
                 bossPhase = false;
+                boss.removeAllProjectiles();
+                boss = null;
                 inBossGracePeriod = true;
                 bossGracePeriodStartTime = activeGameTime;
             }
@@ -377,19 +383,16 @@ public class GameScene {
     }
 
     private void checkCollision() {
-        if (bossPhase && !bosses.isEmpty()) {
-            for (Boss b : bosses) {
-                if (b.checkCollision(dino.getHitBoxBounds())) {
-                    if (barrierActive) return; // 屏障啟動時免傷
-                    boolean damaged = dino.hit(activeGameTime);
-                    if (damaged) {
-                        SoundManager.playHit();
-                        heartDisplay.update(dino.getLives());
-                        if (dino.isDead()) {
-                            gameOver();
-                        }
+        if (bossPhase && boss != null) {
+            if (boss.checkCollision(dino.getHitBoxBounds())) {
+                if (barrierActive) return; // 屏障啟動時免傷
+                boolean damaged = dino.hit(activeGameTime);
+                if (damaged) {
+                    SoundManager.playHit();
+                    heartDisplay.update(dino.getLives());
+                    if (dino.isDead()) {
+                        gameOver();
                     }
-                    break;
                 }
             }
         } else {
@@ -424,6 +427,21 @@ public class GameScene {
         dino.die();
         gameOverImage.setVisible(true);
         restartImage.setVisible(true);
+        if (menuButtonGameOver != null) {
+            // 強制計算大小以取得正確寬度，然後置中於 restartImage 正下方
+            menuButtonGameOver.applyCss();
+            menuButtonGameOver.layout();
+            double btnWidth = menuButtonGameOver.getWidth();
+            double btnHeight = menuButtonGameOver.getHeight();
+            double rx = restartImage.getX();
+            double rwidth = restartImage.getBoundsInParent().getWidth();
+            double rheight = restartImage.getBoundsInParent().getHeight();
+            double btnX = rx + rwidth / 2.0 - btnWidth / 2.0;
+            double btnY = restartImage.getY() + rheight + 8; // 8px 間距
+            menuButtonGameOver.setLayoutX(btnX);
+            menuButtonGameOver.setLayoutY(btnY);
+            menuButtonGameOver.setVisible(true);
+        }
     }
 
     private double getRightMostObstacleX() {
@@ -465,16 +483,15 @@ public class GameScene {
     private void triggerBossPhase() {
         bossIncoming = false;
         bossPhase = true;
-        bosses.clear();
-        double initialX = screenWidth - 150;
-        double spacing = 140;
-        for (int i = 0; i < GameConfig.BOSS_WAVE_SIZE; i++) {
-            double bossX = initialX - i * spacing;
-            bosses.add(new Boss(root, activeGameTime, bossX));
-        }
+        boss = createBossInstance(activeGameTime);
         
         screenFlash.setVisible(true);
         screenFlashStartTime = activeGameTime;
+    }
+
+    private Boss createBossInstance(long activeGameTime) {
+        // 未來可在這裡決定要產生哪種 Boss 類型
+        return new Boss(root, activeGameTime, screenWidth - 150);
     }
 
     private void updateGround(double dtSeconds) {
@@ -563,7 +580,13 @@ public class GameScene {
 
         scene.setOnKeyPressed(e -> {
             if (e.getCode() == KeyCode.ESCAPE) {
-                togglePause();
+                // Allow returning to main menu when game is over; otherwise toggle pause
+                if (gameOver) {
+                    if (timer != null) timer.stop();
+                    dinoMain.showMainMenu();
+                } else {
+                    togglePause();
+                }
                 return;
             }
             if (isPaused) return;
@@ -679,11 +702,9 @@ public class GameScene {
         activeGameTime = 0;
         lastFrameTime = 0;
 
-        if (!bosses.isEmpty()) {
-            for (Boss b : bosses) {
-                b.removeAllProjectiles();
-            }
-            bosses.clear();
+        if (boss != null) {
+            boss.removeAllProjectiles();
+            boss = null;
         }
         bossPhase = false;
         bossIncoming = false;
@@ -709,6 +730,7 @@ public class GameScene {
 
         gameOverImage.setVisible(false);
         restartImage.setVisible(false);
+        if (menuButtonGameOver != null) menuButtonGameOver.setVisible(false);
 
         dino.reset();
         heartDisplay.update(dino.getLives());
