@@ -41,9 +41,9 @@ public class Boss {
     private double velocityY = 0;
     private int walkFrameCounter = 0;
 
-    public Boss(Pane root, long activeGameTime) {
+    public Boss(Pane root, long activeGameTime, double initialX) {
         this.root = root;
-        this.x = startX;
+        this.x = initialX;
         this.y = startY;
 
         walkFrames = new Image[]{
