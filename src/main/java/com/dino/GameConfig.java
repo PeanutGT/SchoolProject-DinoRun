@@ -20,7 +20,6 @@ public class GameConfig {
     // Boss 戰設定
     public static final int BOSS_TRIGGER_SCORE = 1000;
     public static final int BOSS_HP = 1000;
-    public static final int BOSS_WAVE_SIZE = 2; // 同時出現的 Boss 數量
     public static final long BOSS_SURVIVAL_TIME_MS = 30000;
     public static final long BOSS_RETREAT_GRACE_PERIOD_MS = 2000;
     public static final double BOSS_SLAM_JUMP_VELOCITY = -8 * 60;
