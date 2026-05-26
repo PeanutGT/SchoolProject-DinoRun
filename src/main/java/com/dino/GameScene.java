@@ -53,7 +53,6 @@ public class GameScene {
 
     private ImageView gameOverImage;
     private ImageView restartImage;
-    private Button menuButtonGameOver;
     private boolean gameOver = false;
 
     private boolean bossPhase = false;
@@ -78,6 +77,9 @@ public class GameScene {
     private long barrierStartTime = 0;
     private long milkFogStartTime = 0;
     private long screenFlashStartTime = 0;
+
+    private Label barrierCountdownLabel;
+    private Label extraJumpLabel;
 
     private boolean spacePressed = false;
     private boolean jumpAfterRestart = false;
@@ -134,16 +136,6 @@ public class GameScene {
             }
         });
 
-        menuButtonGameOver = new Button("返回主選單");
-        // 初始位置留空，於 gameOver() 時動態置中於重開按鈕下方
-        menuButtonGameOver.setLayoutX(0);
-        menuButtonGameOver.setLayoutY(0);
-        menuButtonGameOver.setVisible(false);
-        menuButtonGameOver.setOnAction(e -> {
-            if (timer != null) timer.stop();
-            dinoMain.showMainMenu();
-        });
-
         scoreDisplay = new ScoreDisplay();
         heartDisplay = new HeartDisplay();
         skillDisplay = new SkillDisplay();
@@ -154,6 +146,19 @@ public class GameScene {
         milkFog = new Rectangle(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT, Color.rgb(255, 255, 255, 0.7));
         milkFog.setVisible(false);
 
+        barrierCountdownLabel = new Label();
+        barrierCountdownLabel.setFont(Font.font("Arial", 36));
+        barrierCountdownLabel.setTextFill(Color.BLUE);
+        barrierCountdownLabel.setLayoutX(GameConfig.SCREEN_WIDTH / 2 - 80);
+        barrierCountdownLabel.setLayoutY(GameConfig.SCREEN_HEIGHT / 2 - 100);
+        barrierCountdownLabel.setVisible(false);
+
+        extraJumpLabel = new Label();
+        extraJumpLabel.setFont(Font.font("Arial", 24));
+        extraJumpLabel.setTextFill(Color.MAGENTA);
+        extraJumpLabel.setLayoutX(20);
+        extraJumpLabel.setLayoutY(150);
+        extraJumpLabel.setVisible(false);
 
         obstacles = new ArrayList<>();
 
@@ -167,7 +172,6 @@ public class GameScene {
                 cloud3,
                 gameOverImage,
                 restartImage,
-            menuButtonGameOver,
                 ground1,
                 ground2,
                 dino.getView()
@@ -186,7 +190,9 @@ public class GameScene {
                 milkFog,
                 heartDisplay.getView(),
                 scoreDisplay.getView(),
-                skillDisplay.getView()
+                skillDisplay.getView(),
+                barrierCountdownLabel,
+                extraJumpLabel
         );
 
         createPauseOverlay();
@@ -340,10 +346,23 @@ public class GameScene {
 
         // 處理屏障時間
         if (barrierActive) {
-            if (activeGameTime - barrierStartTime >= GameConfig.BARRIER_DURATION_MS) {
+            long remaining = GameConfig.BARRIER_DURATION_MS - (activeGameTime - barrierStartTime);
+            if (remaining <= 0) {
                 barrierActive = false;
                 dino.getView().setOpacity(1.0);
+                barrierCountdownLabel.setVisible(false);
+            } else {
+                barrierCountdownLabel.setVisible(true);
+                barrierCountdownLabel.setText("屏障: " + (int) Math.ceil(remaining / 1000.0) + "s");
             }
+        }
+
+        // 處理額外跳躍 UI
+        if (dino.getExtraJumps() > 0) {
+            extraJumpLabel.setVisible(true);
+            extraJumpLabel.setText("額外跳躍: " + dino.getExtraJumps());
+        } else {
+            extraJumpLabel.setVisible(false);
         }
 
         if (milkFog.isVisible()) {
@@ -364,6 +383,7 @@ public class GameScene {
                 bossPhase = false;
                 boss.removeAllProjectiles();
                 boss = null;
+                
                 inBossGracePeriod = true;
                 bossGracePeriodStartTime = activeGameTime;
             }
@@ -427,21 +447,6 @@ public class GameScene {
         dino.die();
         gameOverImage.setVisible(true);
         restartImage.setVisible(true);
-        if (menuButtonGameOver != null) {
-            // 強制計算大小以取得正確寬度，然後置中於 restartImage 正下方
-            menuButtonGameOver.applyCss();
-            menuButtonGameOver.layout();
-            double btnWidth = menuButtonGameOver.getWidth();
-            double btnHeight = menuButtonGameOver.getHeight();
-            double rx = restartImage.getX();
-            double rwidth = restartImage.getBoundsInParent().getWidth();
-            double rheight = restartImage.getBoundsInParent().getHeight();
-            double btnX = rx + rwidth / 2.0 - btnWidth / 2.0;
-            double btnY = restartImage.getY() + rheight + 8; // 8px 間距
-            menuButtonGameOver.setLayoutX(btnX);
-            menuButtonGameOver.setLayoutY(btnY);
-            menuButtonGameOver.setVisible(true);
-        }
     }
 
     private double getRightMostObstacleX() {
@@ -483,15 +488,10 @@ public class GameScene {
     private void triggerBossPhase() {
         bossIncoming = false;
         bossPhase = true;
-        boss = createBossInstance(activeGameTime);
+        boss = new Boss(root, activeGameTime);
         
         screenFlash.setVisible(true);
         screenFlashStartTime = activeGameTime;
-    }
-
-    private Boss createBossInstance(long activeGameTime) {
-        // 未來可在這裡決定要產生哪種 Boss 類型
-        return new Boss(root, activeGameTime, screenWidth - 150);
     }
 
     private void updateGround(double dtSeconds) {
@@ -580,13 +580,7 @@ public class GameScene {
 
         scene.setOnKeyPressed(e -> {
             if (e.getCode() == KeyCode.ESCAPE) {
-                // Allow returning to main menu when game is over; otherwise toggle pause
-                if (gameOver) {
-                    if (timer != null) timer.stop();
-                    dinoMain.showMainMenu();
-                } else {
-                    togglePause();
-                }
+                togglePause();
                 return;
             }
             if (isPaused) return;
@@ -622,29 +616,33 @@ public class GameScene {
             // 技能觸發區塊
             if (e.getCode() == KeyCode.Q && GameConfig.goldenAppleCount > 0) {
                 GameConfig.goldenAppleCount--;
+                SoundManager.playAppleSound();
                 dino.healToFull();
                 heartDisplay.update(dino.getLives());
                 skillDisplay.update();
             } else if (e.getCode() == KeyCode.W && GameConfig.milkBucketCount > 0) {
                 GameConfig.milkBucketCount--;
+                SoundManager.playMilkSound();
                 distance += GameConfig.MILK_SCORE_BONUS * 50;
                 milkFog.setVisible(true);
                 milkFogStartTime = activeGameTime;
                 skillDisplay.update();
             } else if (e.getCode() == KeyCode.E && GameConfig.enchantedBookCount > 0) {
                 GameConfig.enchantedBookCount--;
+                SoundManager.playBookSound();
                 dino.addExtraJump();
-                SoundManager.playScore(); // 播放一個獲得 buff 的音效
                 skillDisplay.update();
             } else if (e.getCode() == KeyCode.R && GameConfig.barrierCount > 0) {
                 GameConfig.barrierCount--;
+                SoundManager.playBarrierSound();
                 barrierActive = true;
                 barrierStartTime = activeGameTime;
                 dino.getView().setOpacity(0.8);
                 skillDisplay.update();
             } else if (e.getCode() == KeyCode.F && GameConfig.woodenSwordCount > 0) {
                 GameConfig.woodenSwordCount--;
-                clearObstaclesInFront();
+                SoundManager.playSwordSound();
+                clearScreenObstacles();
                 skillDisplay.update();
             }
 
@@ -730,7 +728,6 @@ public class GameScene {
 
         gameOverImage.setVisible(false);
         restartImage.setVisible(false);
-        if (menuButtonGameOver != null) menuButtonGameOver.setVisible(false);
 
         dino.reset();
         heartDisplay.update(dino.getLives());
@@ -760,17 +757,41 @@ public class GameScene {
         SoundManager.playScore(); 
     }
 
-    private void clearObstaclesInFront() {
-        double dinoMaxX = dino.getHitBoxBounds().getMaxX();
-        double attackRangeMaxX = dinoMaxX + GameConfig.SWORD_ATTACK_RANGE;
+    private void clearScreenObstacles() {
+        java.util.Iterator<ObstacleSlot> iterator = obstacles.iterator();
+        java.util.List<ObstacleSlot> replacementObstacles = new java.util.ArrayList<>();
 
-        for (ObstacleSlot obstacle : obstacles) {
+        while (iterator.hasNext()) {
+            ObstacleSlot obstacle = iterator.next();
             double obsMinX = obstacle.getHitBoxBounds().getMinX();
-            // 在攻擊範圍內的障礙物全清
-            if (obsMinX >= dinoMaxX && obsMinX <= attackRangeMaxX) {
-                resetObstacle(obstacle);
+            double obsMaxX = obstacle.getHitBoxBounds().getMaxX();
+
+            // 判斷是否在畫面內 (只清除螢幕上的障礙物)
+            if (obsMaxX > 0 && obsMinX < GameConfig.SCREEN_WIDTH) {
+                // 1. 確實將障礙物的圖片從渲染畫面上拔除
+                root.getChildren().remove(obstacle.getCactus().getView());
+                root.getChildren().remove(obstacle.getBird().getView());
+                
+                // 2. 使用 Iterator 安全移除，避免 ConcurrentModificationException
+                iterator.remove();
+                
+                // 3. 觸發加分
                 distance += GameConfig.OBSTACLE_CLEAR_SCORE * 50;
+                
+                // 4. 紀錄需要補回的物件，避免破壞物件池機制導致後續無障礙物
+                replacementObstacles.add(new ObstacleSlot(GameConfig.SCREEN_WIDTH, groundY));
             }
+        }
+
+        // 將新生成的障礙物補回清單與畫面，並確保 Z-index 正確 (在 UI 層之下)
+        int insertIndex = root.getChildren().indexOf(milkFog);
+        if (insertIndex == -1) insertIndex = root.getChildren().size();
+
+        for (ObstacleSlot newSlot : replacementObstacles) {
+            root.getChildren().add(insertIndex, newSlot.getCactus().getView());
+            root.getChildren().add(insertIndex + 1, newSlot.getBird().getView());
+            obstacles.add(newSlot);
+            resetObstacle(newSlot); // 重新計算並分配到畫面右側的隨機位置
         }
     }
 

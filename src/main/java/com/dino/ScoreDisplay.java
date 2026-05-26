@@ -44,7 +44,7 @@ public class ScoreDisplay {
 
         update(0, 0);
     }
-    
+
     private void loadImages() {
         // 改用 ResourceManager 讀取圖片，注意相對路徑包含資料夾
         imageMap.put('0', ResourceManager.getImage("score/0.png"));
@@ -132,8 +132,7 @@ public class ScoreDisplay {
                 new KeyFrame(Duration.millis(850), e -> {
                     flashing = false;
                     currentScoreBox.setOpacity(1.0);
-                })
-        );
+                }));
 
         timeline.play();
     }
