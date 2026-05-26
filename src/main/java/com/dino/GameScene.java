@@ -346,18 +346,12 @@ public class GameScene {
             }
         }
 
-        if (bossPhase && !bosses.isEmpty()) {
-            Iterator<Boss> bossIterator = bosses.iterator();
-            while (bossIterator.hasNext()) {
-                Boss b = bossIterator.next();
-                b.update(speed, activeGameTime, dtSeconds);
-                if (b.isDefeated(activeGameTime)) {
-                    b.removeAllProjectiles();
-                    bossIterator.remove();
-                }
-            }
-            if (bosses.isEmpty()) {
+        if (bossPhase && boss != null) {
+            boss.update(speed, activeGameTime, dtSeconds);
+            if (boss.isDefeated(activeGameTime)) {
                 bossPhase = false;
+                boss.removeAllProjectiles();
+                boss = null;
                 inBossGracePeriod = true;
                 bossGracePeriodStartTime = activeGameTime;
             }
@@ -377,19 +371,16 @@ public class GameScene {
     }
 
     private void checkCollision() {
-        if (bossPhase && !bosses.isEmpty()) {
-            for (Boss b : bosses) {
-                if (b.checkCollision(dino.getHitBoxBounds())) {
-                    if (barrierActive) return; // 屏障啟動時免傷
-                    boolean damaged = dino.hit(activeGameTime);
-                    if (damaged) {
-                        SoundManager.playHit();
-                        heartDisplay.update(dino.getLives());
-                        if (dino.isDead()) {
-                            gameOver();
-                        }
+        if (bossPhase && boss != null) {
+            if (boss.checkCollision(dino.getHitBoxBounds())) {
+                if (barrierActive) return; // 屏障啟動時免傷
+                boolean damaged = dino.hit(activeGameTime);
+                if (damaged) {
+                    SoundManager.playHit();
+                    heartDisplay.update(dino.getLives());
+                    if (dino.isDead()) {
+                        gameOver();
                     }
-                    break;
                 }
             }
         } else {
@@ -465,13 +456,8 @@ public class GameScene {
     private void triggerBossPhase() {
         bossIncoming = false;
         bossPhase = true;
-        bosses.clear();
-        double initialX = screenWidth - 150;
-        double spacing = 140;
-        for (int i = 0; i < GameConfig.BOSS_WAVE_SIZE; i++) {
-            double bossX = initialX - i * spacing;
-            bosses.add(new Boss(root, activeGameTime, bossX));
-        }
+        Boss.Type randomType = Math.random() < 0.5 ? Boss.Type.BOWSER : Boss.Type.BOSS1;
+        boss = new Boss(root, activeGameTime, randomType);
         
         screenFlash.setVisible(true);
         screenFlashStartTime = activeGameTime;
@@ -679,11 +665,9 @@ public class GameScene {
         activeGameTime = 0;
         lastFrameTime = 0;
 
-        if (!bosses.isEmpty()) {
-            for (Boss b : bosses) {
-                b.removeAllProjectiles();
-            }
-            bosses.clear();
+        if (boss != null) {
+            boss.removeAllProjectiles();
+            boss = null;
         }
         bossPhase = false;
         bossIncoming = false;

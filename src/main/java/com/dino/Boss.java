@@ -16,12 +16,22 @@ public class Boss {
         IDLE, PRE_RANGED, RANGED, PRE_SLAM, SLAM
     }
 
+    public enum Type {
+        BOWSER, BOSS1
+    }
+
     private Group group;
     private ImageView visual;
     private Image[] walkFrames;
     private Rectangle hitBox;
 
-    private int hp = GameConfig.BOSS_HP;
+    private final Type type;
+    private String[] bulletImageNames;
+    private String[] shockwaveImageNames;
+    private double rangedAttackChance;
+    private long survivalTimeMs;
+
+    private int hp;
     private long startTime;
     private long stateTimer;
     private State currentState = State.IDLE;
@@ -41,15 +51,13 @@ public class Boss {
     private double velocityY = 0;
     private int walkFrameCounter = 0;
 
-    public Boss(Pane root, long activeGameTime, double initialX) {
+    public Boss(Pane root, long activeGameTime, Type type) {
         this.root = root;
-        this.x = initialX;
+        this.type = type;
+        this.x = startX;
         this.y = startY;
 
-        walkFrames = new Image[]{
-                ResourceManager.getImage("boss_bowser_walk1.png"),
-                ResourceManager.getImage("boss_bowser_walk2.png")
-        };
+        initTypeConfig();
 
         visual = new ImageView(walkFrames[0]);
         visual.setSmooth(false);
@@ -68,6 +76,34 @@ public class Boss {
 
         startTime = activeGameTime;
         stateTimer = activeGameTime;
+    }
+
+    private void initTypeConfig() {
+        switch (type) {
+            case BOSS1:
+                hp = GameConfig.BOSS_HP - 200;
+                walkFrames = new Image[]{
+                        ResourceManager.getImage("boss1_show.png"),
+                        ResourceManager.getImage("boss1_show.png")
+                };
+                bulletImageNames = new String[]{"boss_fire_1.png", "boss_fire_2.png"};
+                shockwaveImageNames = new String[]{"boss_fireball_1.png", "boss_fireball_2.png", "boss_fireball_3.png", "boss_fireball_4.png"};
+                rangedAttackChance = 0.5;
+                survivalTimeMs = GameConfig.BOSS_SURVIVAL_TIME_MS - 5000;
+                break;
+            case BOWSER:
+            default:
+                hp = GameConfig.BOSS_HP;
+                walkFrames = new Image[]{
+                        ResourceManager.getImage("boss_bowser_walk1.png"),
+                        ResourceManager.getImage("boss_bowser_walk2.png")
+                };
+                bulletImageNames = new String[]{"boss_fire_1.png", "boss_fire_2.png"};
+                shockwaveImageNames = new String[]{"boss_fireball_1.png", "boss_fireball_2.png", "boss_fireball_3.png", "boss_fireball_4.png"};
+                rangedAttackChance = 0.65;
+                survivalTimeMs = GameConfig.BOSS_SURVIVAL_TIME_MS;
+                break;
+        }
     }
 
     public void update(double speed, long activeGameTime, double dtSeconds) {
@@ -154,7 +190,7 @@ public class Boss {
 
     private void pickRandomAttack(long activeGameTime) {
         double r = Math.random();
-        if (r < 0.65) {
+        if (r < rangedAttackChance) {
             currentState = State.PRE_RANGED;
         } else {
             currentState = State.PRE_SLAM;
@@ -171,7 +207,7 @@ public class Boss {
                 64,
                 24,
                 GameConfig.BOSS_BULLET_SPEED,
-                new String[]{"boss_fire_1.png", "boss_fire_2.png"}
+                bulletImageNames
         );
         projectiles.add(p);
         root.getChildren().add(p.getView());
@@ -184,7 +220,7 @@ public class Boss {
                 36,
                 36,
                 GameConfig.BOSS_SHOCKWAVE_SPEED,
-                new String[]{"boss_fireball_1.png", "boss_fireball_2.png", "boss_fireball_3.png", "boss_fireball_4.png"}
+                shockwaveImageNames
         );
         projectiles.add(p);
         root.getChildren().add(p.getView());
@@ -202,7 +238,7 @@ public class Boss {
     }
 
     public boolean isDefeated(long activeGameTime) {
-        return activeGameTime - startTime >= GameConfig.BOSS_SURVIVAL_TIME_MS; // 存活滿指定時間即算擊退
+        return activeGameTime - startTime >= survivalTimeMs; // 存活滿指定時間即算擊退
     }
 
     public void removeAllProjectiles() {
