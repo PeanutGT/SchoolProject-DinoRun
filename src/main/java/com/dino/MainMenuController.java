@@ -46,6 +46,7 @@ public class MainMenuController {
         menuContent.setMaxSize(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT);
         createAnimatedBackground();
         startBackgroundAnimation();
+        SoundManager.playMenuBgm();
     }
 
     public void setDinoMain(DinoMain dinoMain) {
@@ -55,6 +56,7 @@ public class MainMenuController {
     @FXML
     private void startGame() {
         if (dinoMain != null) {
+            SoundManager.stopMenuBgm();
             stopBackgroundAnimation();
             dinoMain.startSinglePlayerGame();
         }
@@ -63,6 +65,7 @@ public class MainMenuController {
     @FXML
     private void startCoopGame() {
         if (dinoMain != null) {
+            SoundManager.stopMenuBgm();
             dinoMain.startCoopGame();
         }
     }
@@ -70,6 +73,7 @@ public class MainMenuController {
     @FXML
     private void startVersusGame() {
         if (dinoMain != null) {
+            SoundManager.stopMenuBgm();
             stopBackgroundAnimation();
             dinoMain.startVersusGame();
         }

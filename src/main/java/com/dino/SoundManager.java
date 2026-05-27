@@ -9,6 +9,7 @@ public class SoundManager {
     private static AudioClip jumpSound;
     private static AudioClip hitSound;
     private static AudioClip scoreSound;
+    private static AudioClip menuBgm;
 
     // 技能音效
     private static AudioClip appleSound;
@@ -29,6 +30,7 @@ public class SoundManager {
         scoreSound = loadSound("score.wav");
 
         // 載入技能音效 (存放於 assets/sounds 目錄下)
+        menuBgm = loadSound("sounds/menu1.mp3");
         appleSound = loadSound("sounds/Golden_apple_sound.mp3");
         milkSound = loadSound("sounds/Milk_drinking_sound.mp3");
         bookSound = loadSound("sounds/Enchant_sound.mp3");
@@ -112,6 +114,20 @@ public class SoundManager {
         if (swordSound != null) {
             swordSound.setVolume(GameConfig.masterVolume);
             swordSound.play();
+        }
+    }
+
+    public static void playMenuBgm() {
+        if (menuBgm != null && !menuBgm.isPlaying()) {
+            menuBgm.setVolume(GameConfig.masterVolume);
+            menuBgm.setCycleCount(AudioClip.INDEFINITE);
+            menuBgm.play();
+        }
+    }
+
+    public static void stopMenuBgm() {
+        if (menuBgm != null && menuBgm.isPlaying()) {
+            menuBgm.stop();
         }
     }
 
