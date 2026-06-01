@@ -33,6 +33,7 @@ public class GameScene {
     private Dino dino;
 
     private ArrayList<ObstacleSlot> obstacles;
+    private Label signpost;
 
     private ScoreDisplay scoreDisplay;
     private static int sessionHighScore = 0;
@@ -143,6 +144,11 @@ public class GameScene {
 
         dino = new Dino(100, GameConfig.GROUND_Y, character);
 
+        signpost = new Label("【操作說明】\n[空白鍵] 跳躍/開始\n[下方向鍵] 蹲下\n[自訂技能按鍵] 施放技能");
+        signpost.setStyle("-fx-background-color: #8B4513; -fx-text-fill: white; -fx-border-color: white; -fx-border-width: 2; -fx-font-family: 'Courier New', monospace; -fx-padding: 10; -fx-font-weight: bold;");
+        signpost.setLayoutX(300);
+        signpost.setLayoutY(GameConfig.GROUND_Y - 120);
+
         milkFog = new Rectangle(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT, Color.rgb(255, 255, 255, 0.7));
         milkFog.setVisible(false);
 
@@ -174,6 +180,7 @@ public class GameScene {
                 restartImage,
                 ground1,
                 ground2,
+                signpost,
                 dino.getView()
         );
 
@@ -198,6 +205,7 @@ public class GameScene {
         createPauseOverlay();
         root.getChildren().add(pauseOverlay);
 
+        dino.showHint("按空白鍵開始！");
         startGameLoop();
     }
 
@@ -208,6 +216,7 @@ public class GameScene {
 
         VBox pauseMenu = new VBox(20);
         pauseMenu.setAlignment(Pos.CENTER);
+        pauseMenu.setTranslateY(-30);
 
         Label pauseLabel = new Label("遊戲暫停");
         pauseLabel.setTextFill(Color.WHITE);
@@ -504,6 +513,10 @@ public class GameScene {
         if (ground2.getX() <= -groundWidth) {
             ground2.setX(ground1.getX() + groundWidth);
         }
+        
+        if (signpost.getLayoutX() > -300) {
+            signpost.setLayoutX(signpost.getLayoutX() - speed * dtSeconds);
+        }
     }
 
     private void updateClouds(double dtSeconds) {
@@ -589,6 +602,7 @@ public class GameScene {
                 spacePressed = true;
                 if (waitingToStart) {
                     waitingToStart = false;
+                    dino.hideHint();
                     if (dino.jump()) {
                         SoundManager.playJump();
                     }
@@ -597,6 +611,7 @@ public class GameScene {
                 if (gameOver) {
                     restartGame();
                     waitingToStart = false;
+                    dino.hideHint();
                     if (dino.jump()) {
                         SoundManager.playJump();
                     }
@@ -654,6 +669,16 @@ public class GameScene {
                     distance += 100 * 50;
                 } else if (e.getCode() == KeyCode.F3) {
                     distance = 950 * 50;
+                } else if (e.getCode() == KeyCode.F4) {
+                    // 強制在恐龍前方生成一個道具方塊
+                    QuestionBlock qb = new QuestionBlock(dino.getHitBoxBounds().getMaxX() + 50, GameConfig.GROUND_Y);
+                    questionBlocks.add(qb);
+                    root.getChildren().add(qb.getView());
+                } else if (e.getCode() == KeyCode.F5) {
+                    // 強制召喚 Boss
+                    if (!bossPhase) {
+                        triggerBossPhase();
+                    }
                 }
             }
         });
@@ -697,6 +722,8 @@ public class GameScene {
         lastScoreSound = 0;
         jumpAfterRestart = false;
         waitingToStart = true;
+        signpost.setLayoutX(300);
+        dino.showHint("按空白鍵開始！");
         activeGameTime = 0;
         lastFrameTime = 0;
 
@@ -745,14 +772,27 @@ public class GameScene {
     }
 
     private void giveRandomItem() {
-        int rand = (int)(Math.random() * 5);
-        switch (rand) {
-            case 0: GameConfig.goldenAppleCount++; break;
-            case 1: GameConfig.milkBucketCount++; break;
-            case 2: GameConfig.enchantedBookCount++; break;
-            case 3: GameConfig.barrierCount++; break;
-            case 4: GameConfig.woodenSwordCount++; break;
+        int totalWeight = GameConfig.weightGoldenApple + GameConfig.weightMilkBucket + 
+                          GameConfig.weightEnchantedBook + GameConfig.weightBarrier + GameConfig.weightWoodenSword;
+        int rand = (int)(Math.random() * totalWeight);
+        
+        if (rand < GameConfig.weightGoldenApple) {
+            GameConfig.goldenAppleCount++; 
+            dino.showHint("獲得金蘋果 (Q): 補滿生命值！");
+        } else if (rand < GameConfig.weightGoldenApple + GameConfig.weightMilkBucket) {
+            GameConfig.milkBucketCount++; 
+            dino.showHint("獲得牛奶 (W): 獲得500pt但致盲視野5秒！");
+        } else if (rand < GameConfig.weightGoldenApple + GameConfig.weightMilkBucket + GameConfig.weightEnchantedBook) {
+            GameConfig.enchantedBookCount++; 
+            dino.showHint("獲得附魔書 (E): 獲得額外跳躍次數！");
+        } else if (rand < GameConfig.weightGoldenApple + GameConfig.weightMilkBucket + GameConfig.weightEnchantedBook + GameConfig.weightBarrier) {
+            GameConfig.barrierCount++; 
+            dino.showHint("獲得屏障 (R): 12秒無敵護盾！");
+        } else {
+            GameConfig.woodenSwordCount++; 
+            dino.showHint("獲得木劍 (F): 清除畫面上所有障礙物！(對Boss無效)");
         }
+        
         skillDisplay.update();
         SoundManager.playScore(); 
     }

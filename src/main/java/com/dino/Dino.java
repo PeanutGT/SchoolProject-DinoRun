@@ -5,12 +5,18 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.shape.Rectangle;
 import javafx.geometry.Bounds;
+import javafx.animation.PauseTransition;
+import javafx.util.Duration;
+
+import javafx.scene.control.Label;
 
 public class Dino {
 
     private Group group;
     private ImageView imageView;
     private Rectangle hitBox;
+    private Label hintBubble;
+    private PauseTransition hintTimer;
 
     private Image[] runImages;
     private Image[] jumpImages;
@@ -73,9 +79,31 @@ public class Dino {
         hitBox = new Rectangle(8, 5, standWidth - 16, standHeight - 10);
         hitBox.setVisible(false);
 
-        group = new Group(imageView, hitBox);
+        hintBubble = new Label();
+        hintBubble.setStyle("-fx-background-color: black; -fx-text-fill: white; -fx-border-color: white; -fx-border-width: 2; -fx-font-family: 'Courier New', monospace; -fx-padding: 3; -fx-font-weight: bold;");
+        hintBubble.setLayoutX(30);
+        hintBubble.setLayoutY(-30);
+        hintBubble.setVisible(false);
+
+        group = new Group(imageView, hitBox, hintBubble);
         group.setLayoutX(x);
         group.setLayoutY(getStandGroundPosition());
+    }
+
+    public void showHint(String text) {
+        hintBubble.setText(text);
+        hintBubble.setVisible(true);
+        
+        if (hintTimer != null) {
+            hintTimer.stop();
+        }
+        hintTimer = new PauseTransition(Duration.seconds(2.5));
+        hintTimer.setOnFinished(e -> hideHint());
+        hintTimer.play();
+    }
+
+    public void hideHint() {
+        hintBubble.setVisible(false);
     }
 
     private void loadCharacterImages(String character) {

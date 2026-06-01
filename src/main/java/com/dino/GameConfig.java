@@ -10,7 +10,7 @@ public class GameConfig {
     public static final double JUMP_VELOCITY = -13 * 60;
     public static final double FAST_FALL_VELOCITY = 18 * 60;
     public static final double INITIAL_SPEED = 6 * 60;
-    public static final double MAX_SPEED = 16 * 60;
+    public static final double MAX_SPEED = 30 * 60;
     public static final double ACCELERATION = 0.002 * 3600;
     public static double masterVolume = 0.5;      // 0.0 ~ 1.0
     public static double uiScale = 1.0;           // 1.0 = 800x400, 1.2 = 960x480
@@ -41,6 +41,13 @@ public class GameConfig {
     public static int enchantedBookCount = 0;
     public static int barrierCount = 0;
     public static int woodenSwordCount = 0;
+
+    // 道具掉落權重 (數值越高越容易出現)
+    public static int weightGoldenApple = 5;
+    public static int weightMilkBucket = 30;
+    public static int weightEnchantedBook = 30;
+    public static int weightBarrier = 5;
+    public static int weightWoodenSword = 40;
 
     public static double getScreenWidth() { return SCREEN_WIDTH * uiScale; }
     public static double getScreenHeight() { return SCREEN_HEIGHT * uiScale; }
