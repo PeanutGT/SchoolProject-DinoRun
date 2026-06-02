@@ -19,7 +19,7 @@ public class GameConfig {
     public static boolean devModeEnabled = false;
 
     // Boss 戰設定
-    public static final int BOSS_TRIGGER_SCORE = 1000;
+    public static final int BOSS_TRIGGER_SCORE = 500;
     public static final int BOSS_HP = 1000;
     public static final long BOSS_SURVIVAL_TIME_MS = 30000;
     public static final long BOSS_RETREAT_GRACE_PERIOD_MS = 2000;
