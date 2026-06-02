@@ -41,15 +41,32 @@ public class SettingsPanel extends VBox {
 
         volumeBox.getChildren().addAll(masterVolLabel, masterVolSlider, sfxVolLabel, sfxVolSlider, musicVolLabel, musicVolSlider);
 
-        // 介面大小
-        Label sizeLabel = new Label("介面大小 (需重啟遊戲)");
-        HBox sizeButtons = new HBox(10);
-        sizeButtons.setAlignment(Pos.CENTER);
-        Button sizeNormal = new Button("100%");
-        Button sizeLarge = new Button("120%");
-        sizeNormal.setOnAction(e -> GameConfig.uiScale = 1.0);
-        sizeLarge.setOnAction(e -> GameConfig.uiScale = 1.2);
-        sizeButtons.getChildren().addAll(sizeNormal, sizeLarge);
+        // 全螢幕切換
+        CheckBox fullScreenCheck = new CheckBox("全螢幕 (Full Screen)");
+        fullScreenCheck.setSelected(GameConfig.isFullScreen);
+        
+        fullScreenCheck.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            GameConfig.isFullScreen = newVal;
+            if (fullScreenCheck.getScene() != null && fullScreenCheck.getScene().getWindow() instanceof javafx.stage.Stage) {
+                javafx.stage.Stage stage = (javafx.stage.Stage) fullScreenCheck.getScene().getWindow();
+                stage.setFullScreen(newVal);
+            }
+        });
+
+        // 確保按 ESC 退出全螢幕時能同步更新 UI 狀態
+        fullScreenCheck.sceneProperty().addListener((obsScene, oldScene, newScene) -> {
+            if (newScene != null) {
+                newScene.windowProperty().addListener((obsWin, oldWin, newWin) -> {
+                    if (newWin instanceof javafx.stage.Stage) {
+                        javafx.stage.Stage stage = (javafx.stage.Stage) newWin;
+                        stage.fullScreenProperty().addListener((obsFS, oldFS, newFS) -> {
+                            GameConfig.isFullScreen = newFS;
+                            fullScreenCheck.setSelected(newFS);
+                        });
+                    }
+                });
+            }
+        });
 
         // 開發者模式
         CheckBox devModeCheck = new CheckBox("啟用開發者模式");
@@ -58,6 +75,6 @@ public class SettingsPanel extends VBox {
             GameConfig.devModeEnabled = newVal;
         });
 
-        this.getChildren().addAll(volumeBox, sizeLabel, sizeButtons, devModeCheck);
+        this.getChildren().addAll(volumeBox, fullScreenCheck, devModeCheck);
     }
 }

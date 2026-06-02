@@ -15,7 +15,6 @@ public class GameConfig {
     public static double masterVolume = 0.75;      // 0.0 ~ 1.0
     public static double sfxVolume = 1.0;         // 0.0 ~ 1.0
     public static double musicVolume = 0.5;       // 0.0 ~ 1.0
-    public static double uiScale = 1.0;           // 1.0 = 800x400, 1.2 = 960x480
     public static String selectedCharacter = "dino";
     public static boolean devModeEnabled = false;
 
@@ -50,7 +49,8 @@ public class GameConfig {
     public static int weightEnchantedBook = 30;
     public static int weightBarrier = 5;
     public static int weightWoodenSword = 40;
+    public static boolean isFullScreen = false;
 
-    public static double getScreenWidth() { return SCREEN_WIDTH * uiScale; }
-    public static double getScreenHeight() { return SCREEN_HEIGHT * uiScale; }
+    public static double getScreenWidth() { return SCREEN_WIDTH; }
+    public static double getScreenHeight() { return SCREEN_HEIGHT; }
 }
