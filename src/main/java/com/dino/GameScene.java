@@ -2,6 +2,9 @@ package com.dino;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import javafx.application.Platform;
+import javafx.scene.control.TextInputDialog;
 
 import javafx.animation.AnimationTimer;
 import javafx.geometry.Pos;
@@ -31,6 +34,7 @@ public class GameScene {
     private ImageView cloud3;
 
     private Dino dino;
+    private String currentCharacter;
 
     private ArrayList<ObstacleSlot> obstacles;
     private Label signpost;
@@ -101,6 +105,7 @@ public class GameScene {
 
     public GameScene(DinoMain dinoMain, String character) {
         this.dinoMain = dinoMain;
+        this.currentCharacter = character;
 
         root = new Pane();
         root.setStyle("-fx-background-color: white;");
@@ -456,8 +461,28 @@ public class GameScene {
         }
         scoreDisplay.update(score, sessionHighScore);
         dino.die();
-        gameOverImage.setVisible(true);
-        restartImage.setVisible(true);
+
+        if (LeaderboardManager.isHighScore(score)) {
+            Platform.runLater(() -> {
+                TextInputDialog dialog = new TextInputDialog("Player");
+                dialog.setTitle("排行榜");
+                dialog.setHeaderText("破紀錄啦！");
+                dialog.setContentText("請輸入你的名字：");
+
+                Optional<String> result = dialog.showAndWait();
+                result.ifPresent(name -> {
+                    String cleanName = name.replace(",", "").trim();
+                    if (cleanName.isEmpty()) cleanName = "Unknown";
+                    LeaderboardManager.addScore(cleanName, score, currentCharacter);
+                });
+                
+                gameOverImage.setVisible(true);
+                restartImage.setVisible(true);
+            });
+        } else {
+            gameOverImage.setVisible(true);
+            restartImage.setVisible(true);
+        }
     }
 
     private double getRightMostObstacleX() {
