@@ -50,6 +50,7 @@ public class Dino {
 
     private int animationCounter = 0;
 
+    private int maxLives = 3;
     private int lives = 3;
     private int extraJumps = 0;
     private boolean invincible = false;
@@ -88,6 +89,10 @@ public class Dino {
         group = new Group(imageView, hitBox, hintBubble);
         group.setLayoutX(x);
         group.setLayoutY(getStandGroundPosition());
+
+        this.maxLives = 3 + SaveManager.getLivesBonus();
+        this.lives = this.maxLives;
+        this.extraJumps = SaveManager.getExtraJumps();
     }
 
     public void showHint(String text) {
@@ -366,7 +371,12 @@ public class Dino {
     }
 
     public void healToFull() {
-        lives = 3;
+        this.maxLives = 3 + SaveManager.getLivesBonus();
+        this.lives = this.maxLives;
+    }
+
+    public int getMaxLives() {
+        return this.maxLives;
     }
 
     public void releaseJump() {
@@ -449,7 +459,8 @@ public class Dino {
     }
 
     public void reset() {
-        lives = 3;
+        this.maxLives = 3 + SaveManager.getLivesBonus();
+        this.lives = this.maxLives;
         invincible = false;
         devInvincible = false;
         velocityY = 0;
@@ -457,7 +468,7 @@ public class Dino {
         crouching = false;
         jumpAnimating = false;
         downPressed = false;
-        extraJumps = 0;
+        extraJumps = SaveManager.getExtraJumps();
 
         imageView.setFitWidth(standWidth);
         imageView.setFitHeight(standHeight);

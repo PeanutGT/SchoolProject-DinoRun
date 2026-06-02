@@ -204,6 +204,13 @@ public class MainMenuController {
     }
 
     @FXML
+    private void openShop() {
+        menuContent.getChildren().clear();
+        ShopPanel shopPanel = new ShopPanel(this);
+        menuContent.getChildren().add(shopPanel);
+    }
+
+    @FXML
     private void openSettings() {
         menuContent.getChildren().clear();
 
@@ -223,7 +230,7 @@ public class MainMenuController {
         Platform.exit();
     }
 
-    private void showMainButtons() {
+    void showMainButtons() {
         menuContent.getChildren().clear();
         menuContent.getChildren().add(mainContent);
     }

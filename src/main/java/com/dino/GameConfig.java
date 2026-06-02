@@ -35,6 +35,8 @@ public class GameConfig {
     public static final long MILK_FOG_DURATION_MS = 5000;
     public static final long BARRIER_DURATION_MS = 12000;
     public static final int QUESTION_BLOCK_INTERVAL = 250;
+    public static final int COIN_SPAWN_INTERVAL = 40; // 每 40 分生成金幣
+
 
     // 道具持有數量 (Q, W, E, R, F)
     public static int goldenAppleCount = 0;

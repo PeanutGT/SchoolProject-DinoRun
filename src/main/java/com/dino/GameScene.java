@@ -7,6 +7,11 @@ import javafx.application.Platform;
 import javafx.scene.control.TextInputDialog;
 
 import javafx.animation.AnimationTimer;
+import javafx.animation.FadeTransition;
+import javafx.animation.ParallelTransition;
+import javafx.animation.TranslateTransition;
+import javafx.scene.text.FontWeight;
+import javafx.util.Duration;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -86,6 +91,11 @@ public class GameScene {
     private Label barrierCountdownLabel;
     private Label extraJumpLabel;
 
+    private List<Coin> coinsList;
+    private CoinDisplay coinDisplay;
+    private int sessionCoins = 0;
+    private int lastCoinSpawnScore = 0;
+
     private boolean spacePressed = false;
     private boolean jumpAfterRestart = false;
 
@@ -143,11 +153,12 @@ public class GameScene {
         });
 
         scoreDisplay = new ScoreDisplay();
-        heartDisplay = new HeartDisplay();
+        dino = new Dino(100, GameConfig.GROUND_Y, character);
+        heartDisplay = new HeartDisplay(dino.getMaxLives());
         skillDisplay = new SkillDisplay();
         questionBlocks = new ArrayList<>();
-
-        dino = new Dino(100, GameConfig.GROUND_Y, character);
+        coinsList = new ArrayList<>();
+        coinDisplay = new CoinDisplay();
 
         signpost = new Label("【操作說明】\n[空白鍵] 跳躍/開始\n[下方向鍵] 蹲下\n[自訂技能按鍵] 施放技能");
         signpost.setStyle("-fx-background-color: #8B4513; -fx-text-fill: white; -fx-border-color: white; -fx-border-width: 2; -fx-font-family: 'Courier New', monospace; -fx-padding: 10; -fx-font-weight: bold;");
@@ -201,6 +212,7 @@ public class GameScene {
         root.getChildren().addAll(
                 milkFog,
                 heartDisplay.getView(),
+                coinDisplay.getView(),
                 scoreDisplay.getView(),
                 skillDisplay.getView(),
                 barrierCountdownLabel,
@@ -343,6 +355,33 @@ public class GameScene {
         updateScore(dtSeconds);
 
         dino.update(activeGameTime, dtSeconds);
+
+        // 處理金幣
+        double dinoCenterX = dino.getView().getLayoutX() + dino.getView().getBoundsInLocal().getWidth() / 2.0;
+        double dinoCenterY = dino.getView().getLayoutY() + dino.getView().getBoundsInLocal().getHeight() / 2.0;
+        double magnetRadius = SaveManager.getMagnetRadius();
+
+        java.util.Iterator<Coin> coinIt = coinsList.iterator();
+        while (coinIt.hasNext()) {
+            Coin coin = coinIt.next();
+            coin.update(speed, dtSeconds, dinoCenterX, dinoCenterY, magnetRadius);
+            if (coin.getHitBoxBounds().intersects(dino.getHitBoxBounds())) {
+                root.getChildren().remove(coin.getView());
+                coinIt.remove();
+
+                int multiplier = SaveManager.getCoinMultiplier();
+                int coinsEarned = 1 * multiplier;
+                sessionCoins += coinsEarned;
+                SaveManager.addCoins(coinsEarned);
+                coinDisplay.update(sessionCoins);
+
+                SoundManager.playScore();
+                showFloatingText("+" + coinsEarned, coin.getX(), coin.getY());
+            } else if (coin.isOffScreen()) {
+                root.getChildren().remove(coin.getView());
+                coinIt.remove();
+            }
+        }
 
         // 處理問號方塊
         java.util.Iterator<QuestionBlock> it = questionBlocks.iterator();
@@ -577,6 +616,22 @@ public class GameScene {
                 root.getChildren().add(qb.getView());
             }
 
+            if (score > 0 && score % GameConfig.COIN_SPAWN_INTERVAL == 0 && score != lastCoinSpawnScore) {
+                lastCoinSpawnScore = score;
+                double coinY;
+                double r = Math.random();
+                if (r < 0.4) {
+                    coinY = groundY - 20;
+                } else if (r < 0.7) {
+                    coinY = groundY - 60;
+                } else {
+                    coinY = groundY - 110;
+                }
+                Coin coin = new Coin(screenWidth, coinY);
+                coinsList.add(coin);
+                root.getChildren().add(coin.getView());
+            }
+
             if (!bossHasAppeared && score >= GameConfig.BOSS_TRIGGER_SCORE) {
                 bossIncoming = true;
                 bossHasAppeared = true;
@@ -777,6 +832,14 @@ public class GameScene {
             root.getChildren().remove(qb.getView());
         }
         questionBlocks.clear();
+
+        for (Coin coin : coinsList) {
+            root.getChildren().remove(coin.getView());
+        }
+        coinsList.clear();
+        sessionCoins = 0;
+        lastCoinSpawnScore = 0;
+        coinDisplay.update(sessionCoins);
         
         GameConfig.goldenAppleCount = 0;
         GameConfig.milkBucketCount = 0;
@@ -900,6 +963,27 @@ public class GameScene {
 
         cloud.setX(newX);
         cloud.setY(newY);
+    }
+
+    private void showFloatingText(String text, double x, double y) {
+        Label label = new Label(text);
+        label.setFont(Font.font("Courier New", FontWeight.BOLD, 22));
+        label.setTextFill(Color.web("#FFD54F"));
+        label.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.6), 3, 0, 1, 1);");
+        label.setLayoutX(x);
+        label.setLayoutY(y);
+        root.getChildren().add(label);
+
+        TranslateTransition translate = new TranslateTransition(Duration.millis(600), label);
+        translate.setByY(-50);
+
+        FadeTransition fade = new FadeTransition(Duration.millis(600), label);
+        fade.setFromValue(1.0);
+        fade.setToValue(0.0);
+
+        ParallelTransition parallel = new ParallelTransition(translate, fade);
+        parallel.setOnFinished(e -> root.getChildren().remove(label));
+        parallel.play();
     }
 
     public Pane getView() {

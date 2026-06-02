@@ -1,0 +1,5 @@
+coins=26
+livesLevel=0
+magnetLevel=0
+multiplierLevel=0
+extraJumpsLevel=0
