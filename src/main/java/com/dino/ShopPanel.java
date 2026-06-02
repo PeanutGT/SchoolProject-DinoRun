@@ -1,5 +1,6 @@
 package com.dino;
 
+import javafx.animation.PauseTransition;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -11,12 +12,13 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.effect.DropShadow;
+import javafx.util.Duration;
 
 public class ShopPanel extends VBox {
 
     private MainMenuController controller;
     private Label coinLabel;
-    
+
     // 升級項目卡片列表
     private UpgradeCard cardLives;
     private UpgradeCard cardMagnet;
@@ -24,6 +26,7 @@ public class ShopPanel extends VBox {
     private UpgradeCard cardJumps;
     private UpgradeCard cardRegen;
     private UpgradeCard cardMoreCoins;
+    private CharacterUnlockCard cardCharUnlock;
 
     // 分頁元件
     private int currentPage = 1;
@@ -38,17 +41,16 @@ public class ShopPanel extends VBox {
         this.setAlignment(Pos.CENTER);
         this.setSpacing(10);
         this.setPadding(new Insets(12));
-        
+
         // 復古精緻淺色米質背景樣式
         this.setStyle(
-            "-fx-background-color: #efebe9; " + // 淺米色 / 羊皮紙色
-            "-fx-border-color: #5d4037; " +      // 深邊框
-            "-fx-border-width: 4; " +
-            "-fx-border-style: solid; " +
-            "-fx-background-radius: 8; " +
-            "-fx-border-radius: 4; " +
-            "-fx-padding: 12;"
-        );
+                "-fx-background-color: #efebe9; " + // 淺米色 / 羊皮紙色
+                        "-fx-border-color: #5d4037; " + // 深邊框
+                        "-fx-border-width: 4; " +
+                        "-fx-border-style: solid; " +
+                        "-fx-background-radius: 8; " +
+                        "-fx-border-radius: 4; " +
+                        "-fx-padding: 12;");
         this.setMaxSize(640, 435); // 縮小商店尺寸，使其更加精緻與緊湊
 
         // 標題
@@ -72,72 +74,69 @@ public class ShopPanel extends VBox {
 
         // 1. 永久生命
         cardLives = new UpgradeCard(
-            "永久生命上限",
-            "開始遊戲時獲得額外生命（上限 6）",
-            new int[]{10, 25, 50}, // 升級費用
-            3,
-            () -> SaveManager.getLivesLevel(),
-            (lvl) -> SaveManager.setLivesLevel(lvl),
-            () -> "目前: " + (3 + SaveManager.getLivesLevel()) + " HP"
-        );
+                "永久生命上限",
+                "開始遊戲時獲得額外生命（上限 6）",
+                new int[] { 10, 25, 50 }, // 升級費用
+                3,
+                () -> SaveManager.getLivesLevel(),
+                (lvl) -> SaveManager.setLivesLevel(lvl),
+                () -> "目前: " + (3 + SaveManager.getLivesLevel()) + " HP");
 
         // 2. 金幣磁鐵
         cardMagnet = new UpgradeCard(
-            "金幣磁鐵效果",
-            "自動吸引一定半徑內的所有金幣",
-            new int[]{15, 30, 60},
-            3,
-            () -> SaveManager.getMagnetLevel(),
-            (lvl) -> SaveManager.setMagnetLevel(lvl),
-            () -> {
-                double rad = SaveManager.getMagnetRadius();
-                return rad > 0 ? "目前吸引半徑: " + (int)rad + "px" : "目前無磁力";
-            }
-        );
+                "金幣磁鐵效果",
+                "自動吸引一定半徑內的所有金幣",
+                new int[] { 15, 30, 60 },
+                3,
+                () -> SaveManager.getMagnetLevel(),
+                (lvl) -> SaveManager.setMagnetLevel(lvl),
+                () -> {
+                    double rad = SaveManager.getMagnetRadius();
+                    return rad > 0 ? "目前吸引半徑: " + (int) rad + "px" : "目前無磁力";
+                });
 
         // 3. 金幣倍率
         cardMultiplier = new UpgradeCard(
-            "金幣獲取倍率",
-            "獲得金幣時的倍率加成（最高 5 倍）",
-            new int[]{20, 40, 80},
-            3,
-            () -> SaveManager.getMultiplierLevel(),
-            (lvl) -> SaveManager.setMultiplierLevel(lvl),
-            () -> "目前倍率: " + SaveManager.getCoinMultiplier() + "x"
-        );
+                "金幣獲取倍率",
+                "獲得金幣時的倍率加成（最高 5 倍）",
+                new int[] { 20, 40, 80 },
+                3,
+                () -> SaveManager.getMultiplierLevel(),
+                (lvl) -> SaveManager.setMultiplierLevel(lvl),
+                () -> "目前倍率: " + SaveManager.getCoinMultiplier() + "x");
 
         // 4. 永久多段跳
         cardJumps = new UpgradeCard(
-            "永久空中多段跳",
-            "初始即可在空中多段跳躍，不需吃書",
-            new int[]{30, 70},
-            2,
-            () -> SaveManager.getExtraJumpsLevel(),
-            (lvl) -> SaveManager.setExtraJumpsLevel(lvl),
-            () -> "目前空中跳躍: " + (1 + SaveManager.getExtraJumpsLevel()) + " 次"
-        );
+                "永久空中多段跳",
+                "初始即可在空中多段跳躍，不需吃書",
+                new int[] { 30, 70 },
+                2,
+                () -> SaveManager.getExtraJumpsLevel(),
+                (lvl) -> SaveManager.setExtraJumpsLevel(lvl),
+                () -> "目前空中跳躍: " + (1 + SaveManager.getExtraJumpsLevel()) + " 次");
 
         // 6. 緩慢自動回血
         cardRegen = new UpgradeCard(
-            "緩慢自動回血",
-            "每過 40 秒自動回復 1 點生命（不超過上限）",
-            new int[]{100},
-            1,
-            () -> SaveManager.getRegenLevel(),
-            (lvl) -> SaveManager.setRegenLevel(lvl),
-            () -> SaveManager.hasRegen() ? "目前狀態: 已啟用" : "目前狀態: 未啟用"
-        );
+                "緩慢自動回血",
+                "每過 40 秒自動回復 1 點生命（不超過上限）",
+                new int[] { 100 },
+                1,
+                () -> SaveManager.getRegenLevel(),
+                (lvl) -> SaveManager.setRegenLevel(lvl),
+                () -> SaveManager.hasRegen() ? "目前狀態: 已啟用" : "目前狀態: 未啟用");
 
         // 7. 提高金幣頻率
         cardMoreCoins = new UpgradeCard(
-            "提高金幣頻率",
-            "金幣生成的頻率提升一倍（每20分生成一次）",
-            new int[]{100},
-            1,
-            () -> SaveManager.getMoreCoinsLevel(),
-            (lvl) -> SaveManager.setMoreCoinsLevel(lvl),
-            () -> SaveManager.hasMoreCoins() ? "目前狀態: 已啟用" : "目前狀態: 未啟用"
-        );
+                "提高金幣頻率",
+                "金幣生成的頻率提升一倍（每20分生成一次）",
+                new int[] { 100 },
+                1,
+                () -> SaveManager.getMoreCoinsLevel(),
+                (lvl) -> SaveManager.setMoreCoinsLevel(lvl),
+                () -> SaveManager.hasMoreCoins() ? "目前狀態: 已啟用" : "目前狀態: 未啟用");
+
+        // 8. 角色解鎖扭蛋
+        cardCharUnlock = new CharacterUnlockCard();
 
         // 分頁按鈕與控制列
         HBox pageBox = new HBox(15);
@@ -145,35 +144,32 @@ public class ShopPanel extends VBox {
 
         prevBtn = new Button("[ 上一頁 ]");
         prevBtn.setStyle(
-            "-fx-background-color: transparent; " +
-            "-fx-text-fill: #5d4037; " +
-            "-fx-font-family: 'Courier New'; " +
-            "-fx-font-size: 14; " +
-            "-fx-font-weight: bold; " +
-            "-fx-cursor: hand;"
-        );
+                "-fx-background-color: transparent; " +
+                        "-fx-text-fill: #5d4037; " +
+                        "-fx-font-family: 'Courier New'; " +
+                        "-fx-font-size: 14; " +
+                        "-fx-font-weight: bold; " +
+                        "-fx-cursor: hand;");
         prevBtn.setOnMouseEntered(e -> {
             if (!prevBtn.isDisable()) {
                 prevBtn.setStyle(
-                    "-fx-background-color: #5d4037; " +
-                    "-fx-text-fill: white; " +
-                    "-fx-font-family: 'Courier New'; " +
-                    "-fx-font-size: 14; " +
-                    "-fx-font-weight: bold; " +
-                    "-fx-cursor: hand;"
-                );
+                        "-fx-background-color: #5d4037; " +
+                                "-fx-text-fill: white; " +
+                                "-fx-font-family: 'Courier New'; " +
+                                "-fx-font-size: 14; " +
+                                "-fx-font-weight: bold; " +
+                                "-fx-cursor: hand;");
             }
         });
         prevBtn.setOnMouseExited(e -> {
             if (!prevBtn.isDisable()) {
                 prevBtn.setStyle(
-                    "-fx-background-color: transparent; " +
-                    "-fx-text-fill: #5d4037; " +
-                    "-fx-font-family: 'Courier New'; " +
-                    "-fx-font-size: 14; " +
-                    "-fx-font-weight: bold; " +
-                    "-fx-cursor: hand;"
-                );
+                        "-fx-background-color: transparent; " +
+                                "-fx-text-fill: #5d4037; " +
+                                "-fx-font-family: 'Courier New'; " +
+                                "-fx-font-size: 14; " +
+                                "-fx-font-weight: bold; " +
+                                "-fx-cursor: hand;");
             }
         });
         prevBtn.setOnAction(e -> {
@@ -190,35 +186,32 @@ public class ShopPanel extends VBox {
 
         nextBtn = new Button("[ 下一頁 ]");
         nextBtn.setStyle(
-            "-fx-background-color: transparent; " +
-            "-fx-text-fill: #5d4037; " +
-            "-fx-font-family: 'Courier New'; " +
-            "-fx-font-size: 14; " +
-            "-fx-font-weight: bold; " +
-            "-fx-cursor: hand;"
-        );
+                "-fx-background-color: transparent; " +
+                        "-fx-text-fill: #5d4037; " +
+                        "-fx-font-family: 'Courier New'; " +
+                        "-fx-font-size: 14; " +
+                        "-fx-font-weight: bold; " +
+                        "-fx-cursor: hand;");
         nextBtn.setOnMouseEntered(e -> {
             if (!nextBtn.isDisable()) {
                 nextBtn.setStyle(
-                    "-fx-background-color: #5d4037; " +
-                    "-fx-text-fill: white; " +
-                    "-fx-font-family: 'Courier New'; " +
-                    "-fx-font-size: 14; " +
-                    "-fx-font-weight: bold; " +
-                    "-fx-cursor: hand;"
-                );
+                        "-fx-background-color: #5d4037; " +
+                                "-fx-text-fill: white; " +
+                                "-fx-font-family: 'Courier New'; " +
+                                "-fx-font-size: 14; " +
+                                "-fx-font-weight: bold; " +
+                                "-fx-cursor: hand;");
             }
         });
         nextBtn.setOnMouseExited(e -> {
             if (!nextBtn.isDisable()) {
                 nextBtn.setStyle(
-                    "-fx-background-color: transparent; " +
-                    "-fx-text-fill: #5d4037; " +
-                    "-fx-font-family: 'Courier New'; " +
-                    "-fx-font-size: 14; " +
-                    "-fx-font-weight: bold; " +
-                    "-fx-cursor: hand;"
-                );
+                        "-fx-background-color: transparent; " +
+                                "-fx-text-fill: #5d4037; " +
+                                "-fx-font-family: 'Courier New'; " +
+                                "-fx-font-size: 14; " +
+                                "-fx-font-weight: bold; " +
+                                "-fx-cursor: hand;");
             }
         });
         nextBtn.setOnAction(e -> {
@@ -238,29 +231,26 @@ public class ShopPanel extends VBox {
         // 返回按鈕
         Button backBtn = new Button("[ 返回主選單 ]");
         backBtn.setStyle(
-            "-fx-background-color: transparent; " +
-            "-fx-text-fill: #5d4037; " +
-            "-fx-font-family: 'Courier New'; " +
-            "-fx-font-size: 16; " +
-            "-fx-font-weight: bold; " +
-            "-fx-cursor: hand;"
-        );
+                "-fx-background-color: transparent; " +
+                        "-fx-text-fill: #5d4037; " +
+                        "-fx-font-family: 'Courier New'; " +
+                        "-fx-font-size: 16; " +
+                        "-fx-font-weight: bold; " +
+                        "-fx-cursor: hand;");
         backBtn.setOnMouseEntered(e -> backBtn.setStyle(
-            "-fx-background-color: #5d4037; " +
-            "-fx-text-fill: white; " +
-            "-fx-font-family: 'Courier New'; " +
-            "-fx-font-size: 16; " +
-            "-fx-font-weight: bold; " +
-            "-fx-cursor: hand;"
-        ));
+                "-fx-background-color: #5d4037; " +
+                        "-fx-text-fill: white; " +
+                        "-fx-font-family: 'Courier New'; " +
+                        "-fx-font-size: 16; " +
+                        "-fx-font-weight: bold; " +
+                        "-fx-cursor: hand;"));
         backBtn.setOnMouseExited(e -> backBtn.setStyle(
-            "-fx-background-color: transparent; " +
-            "-fx-text-fill: #5d4037; " +
-            "-fx-font-family: 'Courier New'; " +
-            "-fx-font-size: 16; " +
-            "-fx-font-weight: bold; " +
-            "-fx-cursor: hand;"
-        ));
+                "-fx-background-color: transparent; " +
+                        "-fx-text-fill: #5d4037; " +
+                        "-fx-font-family: 'Courier New'; " +
+                        "-fx-font-size: 16; " +
+                        "-fx-font-weight: bold; " +
+                        "-fx-cursor: hand;"));
         backBtn.setOnAction(e -> {
             SoundManager.playJump(); // 播放點選音效
             controller.showMainButtons();
@@ -269,34 +259,31 @@ public class ShopPanel extends VBox {
         // 開發者按鈕 (像素風紅橘配色)
         Button devBtn = new Button("[ 開發者：+100金幣 ]");
         devBtn.setStyle(
-            "-fx-background-color: transparent; " +
-            "-fx-text-fill: #c62828; " + // 醒目的紅色
-            "-fx-font-family: 'Courier New'; " +
-            "-fx-font-size: 16; " +
-            "-fx-font-weight: bold; " +
-            "-fx-cursor: hand;"
-        );
+                "-fx-background-color: transparent; " +
+                        "-fx-text-fill: #c62828; " + // 醒目的紅色
+                        "-fx-font-family: 'Courier New'; " +
+                        "-fx-font-size: 16; " +
+                        "-fx-font-weight: bold; " +
+                        "-fx-cursor: hand;");
         devBtn.setOnMouseEntered(e -> devBtn.setStyle(
-            "-fx-background-color: #c62828; " +
-            "-fx-text-fill: #ffd54f; " + // 黃金字體
-            "-fx-font-family: 'Courier New'; " +
-            "-fx-font-size: 16; " +
-            "-fx-font-weight: bold; " +
-            "-fx-cursor: hand;"
-        ));
+                "-fx-background-color: #c62828; " +
+                        "-fx-text-fill: #ffd54f; " + // 黃金字體
+                        "-fx-font-family: 'Courier New'; " +
+                        "-fx-font-size: 16; " +
+                        "-fx-font-weight: bold; " +
+                        "-fx-cursor: hand;"));
         devBtn.setOnMouseExited(e -> devBtn.setStyle(
-            "-fx-background-color: transparent; " +
-            "-fx-text-fill: #c62828; " +
-            "-fx-font-family: 'Courier New'; " +
-            "-fx-font-size: 16; " +
-            "-fx-font-weight: bold; " +
-            "-fx-cursor: hand;"
-        ));
+                "-fx-background-color: transparent; " +
+                        "-fx-text-fill: #c62828; " +
+                        "-fx-font-family: 'Courier New'; " +
+                        "-fx-font-size: 16; " +
+                        "-fx-font-weight: bold; " +
+                        "-fx-cursor: hand;"));
         devBtn.setOnAction(e -> {
             SaveManager.addCoins(100);
             updateCoinLabel();
             SoundManager.playScore(); // 播放得分音效
-            
+
             // 即時更新所有卡片的購買按鈕狀態與當前數值
             cardLives.updateUI();
             cardMagnet.updateUI();
@@ -304,6 +291,7 @@ public class ShopPanel extends VBox {
             cardJumps.updateUI();
             cardRegen.updateUI();
             cardMoreCoins.updateUI();
+            cardCharUnlock.updateUI();
         });
 
         bottomBox.getChildren().addAll(backBtn, devBtn);
@@ -323,7 +311,7 @@ public class ShopPanel extends VBox {
             grid.add(cardMagnet, 1, 0);
             grid.add(cardMultiplier, 0, 1);
             grid.add(cardJumps, 1, 1);
-            
+
             prevBtn.setDisable(true);
             prevBtn.setOpacity(0.4);
             nextBtn.setDisable(false);
@@ -331,7 +319,8 @@ public class ShopPanel extends VBox {
         } else {
             grid.add(cardRegen, 0, 0);
             grid.add(cardMoreCoins, 1, 0);
-            
+            grid.add(cardCharUnlock, 0, 1, 2, 1); // 角色解鎖卡橫跨兩欄
+
             prevBtn.setDisable(false);
             prevBtn.setOpacity(1.0);
             nextBtn.setDisable(true);
@@ -361,8 +350,7 @@ public class ShopPanel extends VBox {
                 int maxLevel,
                 java.util.function.Supplier<Integer> getLevelSupplier,
                 java.util.function.Consumer<Integer> setLevelConsumer,
-                java.util.function.Supplier<String> getStatusSupplier
-        ) {
+                java.util.function.Supplier<String> getStatusSupplier) {
             this.name = name;
             this.description = description;
             this.costs = costs;
@@ -376,12 +364,11 @@ public class ShopPanel extends VBox {
             this.setPadding(new Insets(6, 12, 6, 12));
             this.setPrefWidth(280);
             this.setStyle(
-                "-fx-background-color: #d7ccc8; " + // 淺米褐色，卡片底色
-                "-fx-border-color: #8d6e63; " +
-                "-fx-border-width: 2; " +
-                "-fx-background-radius: 6; " +
-                "-fx-border-radius: 4;"
-            );
+                    "-fx-background-color: #d7ccc8; " + // 淺米褐色，卡片底色
+                            "-fx-border-color: #8d6e63; " +
+                            "-fx-border-width: 2; " +
+                            "-fx-background-radius: 6; " +
+                            "-fx-border-radius: 4;");
 
             // 商品名稱
             Label nameLabel = new Label(name);
@@ -416,7 +403,7 @@ public class ShopPanel extends VBox {
 
         public void updateUI() {
             int currentLevel = getLevelSupplier.get();
-            
+
             // 更新星星進度條
             StringBuilder sb = new StringBuilder();
             sb.append("等級: ");
@@ -439,48 +426,44 @@ public class ShopPanel extends VBox {
                 buyButton.setText("已封頂 (MAX)");
                 buyButton.setDisable(true);
                 buyButton.setStyle(
-                    "-fx-background-color: #cfd8dc; " + // 淺灰藍，標準淺色滿等樣式
-                    "-fx-text-fill: #90a4ae; " +
-                    "-fx-font-weight: bold; " +
-                    "-fx-cursor: default;"
-                );
+                        "-fx-background-color: #cfd8dc; " + // 淺灰藍，標準淺色滿等樣式
+                                "-fx-text-fill: #90a4ae; " +
+                                "-fx-font-weight: bold; " +
+                                "-fx-cursor: default;");
                 buyButton.setOnMouseEntered(null);
                 buyButton.setOnMouseExited(null);
                 buyButton.setOnAction(null);
             } else {
                 int cost = costs[currentLevel];
                 buyButton.setText(String.format("升級: %d 金幣", cost));
-                
+
                 int playerCoins = SaveManager.getCoins();
                 if (playerCoins >= cost) {
                     // 可以購買
                     buyButton.setDisable(false);
                     buyButton.setStyle(
-                        "-fx-background-color: #2e7d32; " + // 寶石綠
-                        "-fx-text-fill: white; " +
-                        "-fx-font-weight: bold; " +
-                        "-fx-cursor: hand;"
-                    );
-                    
+                            "-fx-background-color: #2e7d32; " + // 寶石綠
+                                    "-fx-text-fill: white; " +
+                                    "-fx-font-weight: bold; " +
+                                    "-fx-cursor: hand;");
+
                     buyButton.setOnMouseEntered(e -> buyButton.setStyle(
-                        "-fx-background-color: #388e3c; " + // 亮綠色 hover
-                        "-fx-text-fill: white; " +
-                        "-fx-font-weight: bold; " +
-                        "-fx-cursor: hand;"
-                    ));
+                            "-fx-background-color: #388e3c; " + // 亮綠色 hover
+                                    "-fx-text-fill: white; " +
+                                    "-fx-font-weight: bold; " +
+                                    "-fx-cursor: hand;"));
                     buyButton.setOnMouseExited(e -> buyButton.setStyle(
-                        "-fx-background-color: #2e7d32; " +
-                        "-fx-text-fill: white; " +
-                        "-fx-font-weight: bold; " +
-                        "-fx-cursor: hand;"
-                    ));
-                    
+                            "-fx-background-color: #2e7d32; " +
+                                    "-fx-text-fill: white; " +
+                                    "-fx-font-weight: bold; " +
+                                    "-fx-cursor: hand;"));
+
                     buyButton.setOnAction(e -> {
                         // 扣除硬幣並升級
                         if (SaveManager.spendCoins(cost)) {
                             setLevelConsumer.accept(currentLevel + 1);
                             SoundManager.playAppleSound(); // 播放升級成功清脆音效！
-                            
+
                             // 更新整個商店 UI
                             ShopPanel.this.updateCoinLabel();
                             ShopPanel.this.cardLives.updateUI();
@@ -495,16 +478,156 @@ public class ShopPanel extends VBox {
                     // 金幣不足
                     buyButton.setDisable(true);
                     buyButton.setStyle(
-                        "-fx-background-color: #e0e0e0; " + // 淺灰白，標準淺色金幣不足樣式
-                        "-fx-text-fill: #9e9e9e; " +         // 灰色字體
-                        "-fx-font-weight: bold; " +
-                        "-fx-cursor: default;"
-                    );
+                            "-fx-background-color: #e0e0e0; " + // 淺灰白，標準淺色金幣不足樣式
+                                    "-fx-text-fill: #9e9e9e; " + // 灰色字體
+                                    "-fx-font-weight: bold; " +
+                                    "-fx-cursor: default;");
                     buyButton.setOnMouseEntered(null);
                     buyButton.setOnMouseExited(null);
                     buyButton.setOnAction(null);
                 }
             }
+        }
+    }
+
+    // 角色解鎖扭蛋卡片
+    private class CharacterUnlockCard extends VBox {
+        private static final int UNLOCK_COST = 100;
+        private static final java.util.Map<String, String> CHAR_DISPLAY_NAMES = java.util.Map.of(
+                "mario", "MARIO",
+                "luigi", "LUIGI",
+                "kirby", "KIRBY",
+                "lucario", "LUCARIO",
+                "sonic", "SONIC",
+                "steve", "STEVE"
+        );
+
+        private Label statusLabel;
+        private Button buyButton;
+        private Label resultLabel;
+
+        public CharacterUnlockCard() {
+            this.setAlignment(Pos.CENTER);
+            this.setSpacing(6);
+            this.setPadding(new Insets(8, 12, 8, 12));
+            this.setPrefWidth(575);
+            this.setStyle(
+                    "-fx-background-color: linear-gradient(to right, #fff3e0, #ffe0b2); " +
+                            "-fx-border-color: #e65100; " +
+                            "-fx-border-width: 2; " +
+                            "-fx-background-radius: 6; " +
+                            "-fx-border-radius: 4;");
+
+            // 標題
+            Label nameLabel = new Label("\uD83C\uDFB2 角色解鎖扭蛋");
+            nameLabel.setFont(Font.font("Microsoft JhengHei", FontWeight.BOLD, 16));
+            nameLabel.setTextFill(Color.web("#e65100"));
+
+            // 描述
+            Label descLabel = new Label("花費 100 金幣隨機解鎖一位全新角色！可在選角畫面使用。");
+            descLabel.setFont(Font.font("Microsoft JhengHei", FontWeight.NORMAL, 12));
+            descLabel.setTextFill(Color.web("#5d4037"));
+
+            // 狀態
+            statusLabel = new Label();
+            statusLabel.setFont(Font.font("Courier New", FontWeight.BOLD, 12));
+            statusLabel.setTextFill(Color.web("#006064"));
+
+            // 購買按鈕
+            buyButton = new Button();
+            buyButton.setFont(Font.font("Microsoft JhengHei", FontWeight.BOLD, 13));
+            buyButton.setPrefWidth(256);
+
+            // 結果提示
+            resultLabel = new Label();
+            resultLabel.setFont(Font.font("Microsoft JhengHei", FontWeight.BOLD, 14));
+            resultLabel.setTextFill(Color.web("#2e7d32"));
+
+            this.getChildren().addAll(nameLabel, descLabel, statusLabel, buyButton, resultLabel);
+            updateUI();
+        }
+
+        public void updateUI() {
+            int unlocked = SaveManager.getUnlockedCharactersCount();
+            statusLabel.setText("已解鎖角色: " + unlocked + " / 6");
+
+            if (unlocked >= 6) {
+                // 全部角色已解鎖
+                buyButton.setText("已全部解鎖 \u2714");
+                buyButton.setDisable(true);
+                buyButton.setStyle(
+                        "-fx-background-color: #cfd8dc; " +
+                                "-fx-text-fill: #90a4ae; " +
+                                "-fx-font-weight: bold; " +
+                                "-fx-cursor: default;");
+                buyButton.setOnMouseEntered(null);
+                buyButton.setOnMouseExited(null);
+                buyButton.setOnAction(null);
+            } else {
+                int playerCoins = SaveManager.getCoins();
+                buyButton.setText("解鎖隨機角色: " + UNLOCK_COST + " 金幣");
+
+                if (playerCoins >= UNLOCK_COST) {
+                    buyButton.setDisable(false);
+                    buyButton.setStyle(
+                            "-fx-background-color: #e65100; " +
+                                    "-fx-text-fill: white; " +
+                                    "-fx-font-weight: bold; " +
+                                    "-fx-cursor: hand;");
+                    buyButton.setOnMouseEntered(e -> buyButton.setStyle(
+                            "-fx-background-color: #f57c00; " +
+                                    "-fx-text-fill: white; " +
+                                    "-fx-font-weight: bold; " +
+                                    "-fx-cursor: hand;"));
+                    buyButton.setOnMouseExited(e -> buyButton.setStyle(
+                            "-fx-background-color: #e65100; " +
+                                    "-fx-text-fill: white; " +
+                                    "-fx-font-weight: bold; " +
+                                    "-fx-cursor: hand;"));
+                    buyButton.setOnAction(e -> purchaseUnlock());
+                } else {
+                    buyButton.setDisable(true);
+                    buyButton.setStyle(
+                            "-fx-background-color: #e0e0e0; " +
+                                    "-fx-text-fill: #9e9e9e; " +
+                                    "-fx-font-weight: bold; " +
+                                    "-fx-cursor: default;");
+                    buyButton.setOnMouseEntered(null);
+                    buyButton.setOnMouseExited(null);
+                    buyButton.setOnAction(null);
+                }
+            }
+        }
+
+        private void purchaseUnlock() {
+            if (!SaveManager.spendCoins(UNLOCK_COST)) return;
+
+            String unlockedChar = SaveManager.unlockRandomCharacter();
+            if (unlockedChar != null) {
+                String displayName = CHAR_DISPLAY_NAMES.getOrDefault(unlockedChar, unlockedChar.toUpperCase());
+                resultLabel.setText("\uD83C\uDF89 恭喜！你解鎖了 " + displayName + " ！");
+                resultLabel.setTextFill(Color.web("#2e7d32"));
+                SoundManager.playAppleSound();
+            } else {
+                // 理論上不會到這裡（按鈕在全解鎖後會禁用），但保險起見
+                resultLabel.setText("所有角色已解鎖！");
+                SaveManager.addCoins(UNLOCK_COST); // 退還金幣
+            }
+
+            // 更新整個商店 UI
+            ShopPanel.this.updateCoinLabel();
+            ShopPanel.this.cardLives.updateUI();
+            ShopPanel.this.cardMagnet.updateUI();
+            ShopPanel.this.cardMultiplier.updateUI();
+            ShopPanel.this.cardJumps.updateUI();
+            ShopPanel.this.cardRegen.updateUI();
+            ShopPanel.this.cardMoreCoins.updateUI();
+            this.updateUI();
+
+            // 3 秒後清除結果提示
+            PauseTransition pause = new PauseTransition(Duration.seconds(3));
+            pause.setOnFinished(ev -> resultLabel.setText(""));
+            pause.play();
         }
     }
 }

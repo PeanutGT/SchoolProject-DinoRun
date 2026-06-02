@@ -1292,12 +1292,8 @@ public class GameScene {
         // 播放拋擲迴力鏢音效
         SoundManager.playScore();
 
-        int insertIndex = root.getChildren().indexOf(milkFog);
-        if (insertIndex != -1) {
-            root.getChildren().add(insertIndex, boomerangGroup);
-        } else {
-            root.getChildren().add(boomerangGroup);
-        }
+        // 把迴力鏢加到最上層，以免被其他節點遮蓋
+        root.getChildren().add(boomerangGroup);
     }
 
     public Pane getView() {
