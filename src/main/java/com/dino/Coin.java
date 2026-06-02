@@ -21,7 +21,7 @@ public class Coin {
 
     private double x;
     private double y;
-    private final double radius = 12;
+    private final double radius = 18;
     private double spinTime = Math.random() * 10; // 隨機初始角度，避免所有硬幣完全同步旋轉
 
     public Coin(double x, double y) {
@@ -69,17 +69,17 @@ public class Coin {
 
             outerCircle = new Circle(radius, goldGrad);
             outerCircle.setStroke(Color.web("#F57F17")); // 橘紅邊框，強調像素/立體感
-            outerCircle.setStrokeWidth(2);
+            outerCircle.setStrokeWidth(3);
 
-            innerCircle = new Circle(radius - 3, goldGrad);
+            innerCircle = new Circle(radius - 4, goldGrad);
             innerCircle.setStroke(Color.web("#FFEE58"));
-            innerCircle.setStrokeWidth(1);
+            innerCircle.setStrokeWidth(1.5);
 
             text = new Text("C");
-            text.setFont(Font.font("Courier New", FontWeight.BOLD, 12));
+            text.setFont(Font.font("Courier New", FontWeight.BOLD, 18));
             text.setFill(Color.web("#E65100")); // 深橘色文字
-            text.setX(-4.5);
-            text.setY(4);
+            text.setX(-6.5);
+            text.setY(6.5);
 
             coinArt.getChildren().addAll(outerCircle, innerCircle, text);
         }

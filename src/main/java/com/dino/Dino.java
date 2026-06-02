@@ -375,6 +375,12 @@ public class Dino {
         this.lives = this.maxLives;
     }
 
+    public void healOne() {
+        if (lives < maxLives) {
+            lives++;
+        }
+    }
+
     public int getMaxLives() {
         return this.maxLives;
     }

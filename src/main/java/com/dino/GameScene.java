@@ -103,6 +103,7 @@ public class GameScene {
     // Game Clock
     private long activeGameTime = 0;
     private long lastFrameTime = 0;
+    private double regenTimer = 0.0;
 
     // 引入 GameConfig 常數
     private final double acceleration = GameConfig.ACCELERATION;
@@ -480,6 +481,20 @@ public class GameScene {
             }
         }
 
+        // 處理緩慢自動回血
+        if (SaveManager.hasRegen() && !dino.isDead() && dino.getLives() < dino.getMaxLives()) {
+            regenTimer += dtSeconds;
+            if (regenTimer >= 40.0) {
+                regenTimer = 0.0;
+                dino.healOne();
+                heartDisplay.update(dino.getLives());
+                SoundManager.playAppleSound(); // 播放清脆的回血成功音效！
+                showFloatingText("+1 HP", dino.getView().getLayoutX() + 20, dino.getView().getLayoutY() - 30);
+            }
+        } else {
+            regenTimer = 0.0; // 如果滿血或沒有該功能，重置計時器
+        }
+
         if (bossPhase && boss != null) {
             boss.update(speed, activeGameTime, dtSeconds);
             if (boss.isDefeated(activeGameTime)) {
@@ -616,6 +631,7 @@ public class GameScene {
         bossPhase = true;
         boss = new Boss(root, activeGameTime);
         
+        screenFlash.setFill(Color.rgb(255, 0, 0, 0.5));
         screenFlash.setVisible(true);
         screenFlashStartTime = activeGameTime;
     }
@@ -664,10 +680,16 @@ public class GameScene {
                 lastQuestionBlockScore = score;
                 QuestionBlock qb = new QuestionBlock(screenWidth, groundY);
                 questionBlocks.add(qb);
-                root.getChildren().add(qb.getView());
+                int idx = root.getChildren().indexOf(milkFog);
+                if (idx != -1) {
+                    root.getChildren().add(idx, qb.getView());
+                } else {
+                    root.getChildren().add(qb.getView());
+                }
             }
 
-            if (score > 0 && score % GameConfig.COIN_SPAWN_INTERVAL == 0 && score != lastCoinSpawnScore) {
+            int coinSpawnInterval = SaveManager.hasMoreCoins() ? 20 : GameConfig.COIN_SPAWN_INTERVAL;
+            if (score > 0 && score % coinSpawnInterval == 0 && score != lastCoinSpawnScore) {
                 lastCoinSpawnScore = score;
                 double coinY;
                 double r = Math.random();
@@ -681,7 +703,12 @@ public class GameScene {
                 double safeX = getSafeCoinX();
                 Coin coin = new Coin(safeX, coinY);
                 coinsList.add(coin);
-                root.getChildren().add(coin.getView());
+                int idx = root.getChildren().indexOf(milkFog);
+                if (idx != -1) {
+                    root.getChildren().add(idx, coin.getView());
+                } else {
+                    root.getChildren().add(coin.getView());
+                }
             }
 
             if (!bossHasAppeared && score >= GameConfig.BOSS_TRIGGER_SCORE) {
@@ -809,7 +836,12 @@ public class GameScene {
                     // 強制在恐龍前方生成一個道具方塊
                     QuestionBlock qb = new QuestionBlock(dino.getHitBoxBounds().getMaxX() + 50, GameConfig.GROUND_Y);
                     questionBlocks.add(qb);
-                    root.getChildren().add(qb.getView());
+                    int idx = root.getChildren().indexOf(milkFog);
+                    if (idx != -1) {
+                        root.getChildren().add(idx, qb.getView());
+                    } else {
+                        root.getChildren().add(qb.getView());
+                    }
                 } else if (e.getCode() == KeyCode.F5) {
                     // 強制召喚 Boss
                     if (!bossPhase) {
@@ -891,6 +923,7 @@ public class GameScene {
         coinsList.clear();
         sessionCoins = 0;
         lastCoinSpawnScore = 0;
+        regenTimer = 0.0;
         coinDisplay.update(sessionCoins);
         
         GameConfig.goldenAppleCount = 0;

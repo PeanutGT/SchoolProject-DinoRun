@@ -1,5 +1,8 @@
-coins=100
+coins=8
 livesLevel=0
 magnetLevel=0
 multiplierLevel=0
 extraJumpsLevel=0
+resurrectionCount=0
+regenLevel=0
+moreCoinsLevel=0

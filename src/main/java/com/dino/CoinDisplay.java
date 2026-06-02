@@ -25,12 +25,11 @@ public class CoinDisplay {
         root = new HBox(6);
         root.setAlignment(Pos.CENTER_LEFT);
         
-        // 為了支援動態生命心形條（最高 6 顆心，寬度約 30 + 6 * 30 = 210px），
-        // 將金幣計數器擺放在 X=230 的位置，非常和諧！
-        root.setLayoutX(230);
-        root.setLayoutY(24);
+        // 將金幣計數器擺放在 X=590, Y=30 的位置，正好緊鄰在分數顯示的左側，和諧一致！
+        root.setLayoutX(590);
+        root.setLayoutY(30);
 
-        // 1. 載入硬幣圖示 (有 coin.png 就用圖片，沒有就用精緻向量圖案)
+        // 1. 載入硬幣圖示 (有 coin.png 就用圖片，沒有就用精緻向量圖案，放大 1.5 倍)
         javafx.scene.Node coinIconNode = null;
         try {
             String path = "/com/dino/assets/coin.png";
@@ -39,8 +38,8 @@ public class CoinDisplay {
                 if (coinImage != null && !coinImage.isError()) {
                     ImageView imgView = new ImageView(coinImage);
                     imgView.setSmooth(false);
-                    imgView.setFitWidth(16);
-                    imgView.setFitHeight(16);
+                    imgView.setFitWidth(24);
+                    imgView.setFitHeight(24);
                     coinIconNode = imgView;
                 }
             }
@@ -49,7 +48,7 @@ public class CoinDisplay {
         }
 
         if (coinIconNode == null) {
-            Circle coinIcon = new Circle(8);
+            Circle coinIcon = new Circle(12);
             RadialGradient goldGrad = new RadialGradient(
                 0, 0, 0.5, 0.5, 0.5, true, javafx.scene.paint.CycleMethod.NO_CYCLE,
                 new Stop(0, Color.web("#FFF59D")),
@@ -57,7 +56,7 @@ public class CoinDisplay {
             );
             coinIcon.setFill(goldGrad);
             coinIcon.setStroke(Color.web("#F57F17"));
-            coinIcon.setStrokeWidth(1.5);
+            coinIcon.setStrokeWidth(2.25);
             coinIconNode = coinIcon;
         }
 

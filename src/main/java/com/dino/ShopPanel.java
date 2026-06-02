@@ -22,13 +22,22 @@ public class ShopPanel extends VBox {
     private UpgradeCard cardMagnet;
     private UpgradeCard cardMultiplier;
     private UpgradeCard cardJumps;
+    private UpgradeCard cardRegen;
+    private UpgradeCard cardMoreCoins;
+
+    // 分頁元件
+    private int currentPage = 1;
+    private GridPane grid;
+    private Button prevBtn;
+    private Button nextBtn;
+    private Label pageLabel;
 
     public ShopPanel(MainMenuController controller) {
         this.controller = controller;
 
         this.setAlignment(Pos.CENTER);
-        this.setSpacing(15);
-        this.setPadding(new Insets(20));
+        this.setSpacing(10);
+        this.setPadding(new Insets(12));
         
         // 復古精緻淺色米質背景樣式
         this.setStyle(
@@ -38,27 +47,27 @@ public class ShopPanel extends VBox {
             "-fx-border-style: solid; " +
             "-fx-background-radius: 8; " +
             "-fx-border-radius: 4; " +
-            "-fx-padding: 20;"
+            "-fx-padding: 12;"
         );
-        this.setMaxSize(700, 420);
+        this.setMaxSize(640, 435); // 縮小商店尺寸，使其更加精緻與緊湊
 
         // 標題
         Label titleLabel = new Label("★ 恐龍進化商店 ★");
-        titleLabel.setFont(Font.font("Microsoft JhengHei", FontWeight.BOLD, 28));
+        titleLabel.setFont(Font.font("Microsoft JhengHei", FontWeight.BOLD, 24));
         titleLabel.setTextFill(Color.web("#3e2723")); // 改為深褐色以確保高對比度
         DropShadow titleShadow = new DropShadow(2, Color.web("#d7ccc8"));
         titleLabel.setEffect(titleShadow);
 
         // 金幣餘額顯示
         coinLabel = new Label();
-        coinLabel.setFont(Font.font("Microsoft JhengHei", FontWeight.BOLD, 20));
+        coinLabel.setFont(Font.font("Microsoft JhengHei", FontWeight.BOLD, 18));
         coinLabel.setTextFill(Color.web("#5d4037")); // 改為深褐色以確保高對比度
         updateCoinLabel();
 
-        // 網格佈局放置 4 個商品
-        GridPane grid = new GridPane();
-        grid.setHgap(20);
-        grid.setVgap(15);
+        // 網格佈局放置商品
+        grid = new GridPane();
+        grid.setHgap(15);
+        grid.setVgap(10);
         grid.setAlignment(Pos.CENTER);
 
         // 1. 永久生命
@@ -108,13 +117,122 @@ public class ShopPanel extends VBox {
             () -> "目前空中跳躍: " + (1 + SaveManager.getExtraJumpsLevel()) + " 次"
         );
 
-        grid.add(cardLives, 0, 0);
-        grid.add(cardMagnet, 1, 0);
-        grid.add(cardMultiplier, 0, 1);
-        grid.add(cardJumps, 1, 1);
+        // 6. 緩慢自動回血
+        cardRegen = new UpgradeCard(
+            "緩慢自動回血",
+            "每過 40 秒自動回復 1 點生命（不超過上限）",
+            new int[]{100},
+            1,
+            () -> SaveManager.getRegenLevel(),
+            (lvl) -> SaveManager.setRegenLevel(lvl),
+            () -> SaveManager.hasRegen() ? "目前狀態: 已啟用" : "目前狀態: 未啟用"
+        );
+
+        // 7. 提高金幣頻率
+        cardMoreCoins = new UpgradeCard(
+            "提高金幣頻率",
+            "金幣生成的頻率提升一倍（每20分生成一次）",
+            new int[]{100},
+            1,
+            () -> SaveManager.getMoreCoinsLevel(),
+            (lvl) -> SaveManager.setMoreCoinsLevel(lvl),
+            () -> SaveManager.hasMoreCoins() ? "目前狀態: 已啟用" : "目前狀態: 未啟用"
+        );
+
+        // 分頁按鈕與控制列
+        HBox pageBox = new HBox(15);
+        pageBox.setAlignment(Pos.CENTER);
+
+        prevBtn = new Button("[ 上一頁 ]");
+        prevBtn.setStyle(
+            "-fx-background-color: transparent; " +
+            "-fx-text-fill: #5d4037; " +
+            "-fx-font-family: 'Courier New'; " +
+            "-fx-font-size: 14; " +
+            "-fx-font-weight: bold; " +
+            "-fx-cursor: hand;"
+        );
+        prevBtn.setOnMouseEntered(e -> {
+            if (!prevBtn.isDisable()) {
+                prevBtn.setStyle(
+                    "-fx-background-color: #5d4037; " +
+                    "-fx-text-fill: white; " +
+                    "-fx-font-family: 'Courier New'; " +
+                    "-fx-font-size: 14; " +
+                    "-fx-font-weight: bold; " +
+                    "-fx-cursor: hand;"
+                );
+            }
+        });
+        prevBtn.setOnMouseExited(e -> {
+            if (!prevBtn.isDisable()) {
+                prevBtn.setStyle(
+                    "-fx-background-color: transparent; " +
+                    "-fx-text-fill: #5d4037; " +
+                    "-fx-font-family: 'Courier New'; " +
+                    "-fx-font-size: 14; " +
+                    "-fx-font-weight: bold; " +
+                    "-fx-cursor: hand;"
+                );
+            }
+        });
+        prevBtn.setOnAction(e -> {
+            if (currentPage > 1) {
+                currentPage--;
+                SoundManager.playJump();
+                updatePageUI();
+            }
+        });
+
+        pageLabel = new Label();
+        pageLabel.setFont(Font.font("Microsoft JhengHei", FontWeight.BOLD, 14));
+        pageLabel.setTextFill(Color.web("#5d4037"));
+
+        nextBtn = new Button("[ 下一頁 ]");
+        nextBtn.setStyle(
+            "-fx-background-color: transparent; " +
+            "-fx-text-fill: #5d4037; " +
+            "-fx-font-family: 'Courier New'; " +
+            "-fx-font-size: 14; " +
+            "-fx-font-weight: bold; " +
+            "-fx-cursor: hand;"
+        );
+        nextBtn.setOnMouseEntered(e -> {
+            if (!nextBtn.isDisable()) {
+                nextBtn.setStyle(
+                    "-fx-background-color: #5d4037; " +
+                    "-fx-text-fill: white; " +
+                    "-fx-font-family: 'Courier New'; " +
+                    "-fx-font-size: 14; " +
+                    "-fx-font-weight: bold; " +
+                    "-fx-cursor: hand;"
+                );
+            }
+        });
+        nextBtn.setOnMouseExited(e -> {
+            if (!nextBtn.isDisable()) {
+                nextBtn.setStyle(
+                    "-fx-background-color: transparent; " +
+                    "-fx-text-fill: #5d4037; " +
+                    "-fx-font-family: 'Courier New'; " +
+                    "-fx-font-size: 14; " +
+                    "-fx-font-weight: bold; " +
+                    "-fx-cursor: hand;"
+                );
+            }
+        });
+        nextBtn.setOnAction(e -> {
+            if (currentPage < 2) {
+                currentPage++;
+                SoundManager.playJump();
+                updatePageUI();
+            }
+        });
+
+        pageBox.getChildren().addAll(prevBtn, pageLabel, nextBtn);
 
         // 底部按鈕區塊
-        HBox bottomBox = new HBox(30);
+        HBox bottomBox = new HBox(20);
         bottomBox.setAlignment(Pos.CENTER);
 
         // 返回按鈕
@@ -123,7 +241,7 @@ public class ShopPanel extends VBox {
             "-fx-background-color: transparent; " +
             "-fx-text-fill: #5d4037; " +
             "-fx-font-family: 'Courier New'; " +
-            "-fx-font-size: 18; " +
+            "-fx-font-size: 16; " +
             "-fx-font-weight: bold; " +
             "-fx-cursor: hand;"
         );
@@ -131,7 +249,7 @@ public class ShopPanel extends VBox {
             "-fx-background-color: #5d4037; " +
             "-fx-text-fill: white; " +
             "-fx-font-family: 'Courier New'; " +
-            "-fx-font-size: 18; " +
+            "-fx-font-size: 16; " +
             "-fx-font-weight: bold; " +
             "-fx-cursor: hand;"
         ));
@@ -139,7 +257,7 @@ public class ShopPanel extends VBox {
             "-fx-background-color: transparent; " +
             "-fx-text-fill: #5d4037; " +
             "-fx-font-family: 'Courier New'; " +
-            "-fx-font-size: 18; " +
+            "-fx-font-size: 16; " +
             "-fx-font-weight: bold; " +
             "-fx-cursor: hand;"
         ));
@@ -154,7 +272,7 @@ public class ShopPanel extends VBox {
             "-fx-background-color: transparent; " +
             "-fx-text-fill: #c62828; " + // 醒目的紅色
             "-fx-font-family: 'Courier New'; " +
-            "-fx-font-size: 18; " +
+            "-fx-font-size: 16; " +
             "-fx-font-weight: bold; " +
             "-fx-cursor: hand;"
         );
@@ -162,7 +280,7 @@ public class ShopPanel extends VBox {
             "-fx-background-color: #c62828; " +
             "-fx-text-fill: #ffd54f; " + // 黃金字體
             "-fx-font-family: 'Courier New'; " +
-            "-fx-font-size: 18; " +
+            "-fx-font-size: 16; " +
             "-fx-font-weight: bold; " +
             "-fx-cursor: hand;"
         ));
@@ -170,7 +288,7 @@ public class ShopPanel extends VBox {
             "-fx-background-color: transparent; " +
             "-fx-text-fill: #c62828; " +
             "-fx-font-family: 'Courier New'; " +
-            "-fx-font-size: 18; " +
+            "-fx-font-size: 16; " +
             "-fx-font-weight: bold; " +
             "-fx-cursor: hand;"
         ));
@@ -184,15 +302,42 @@ public class ShopPanel extends VBox {
             cardMagnet.updateUI();
             cardMultiplier.updateUI();
             cardJumps.updateUI();
+            cardRegen.updateUI();
+            cardMoreCoins.updateUI();
         });
 
         bottomBox.getChildren().addAll(backBtn, devBtn);
 
-        this.getChildren().addAll(titleLabel, coinLabel, grid, bottomBox);
+        this.getChildren().addAll(titleLabel, coinLabel, grid, pageBox, bottomBox);
+        updatePageUI();
     }
 
     private void updateCoinLabel() {
         coinLabel.setText("★ 目前擁有金幣: " + SaveManager.getCoins() + " ★");
+    }
+
+    private void updatePageUI() {
+        grid.getChildren().clear();
+        if (currentPage == 1) {
+            grid.add(cardLives, 0, 0);
+            grid.add(cardMagnet, 1, 0);
+            grid.add(cardMultiplier, 0, 1);
+            grid.add(cardJumps, 1, 1);
+            
+            prevBtn.setDisable(true);
+            prevBtn.setOpacity(0.4);
+            nextBtn.setDisable(false);
+            nextBtn.setOpacity(1.0);
+        } else {
+            grid.add(cardRegen, 0, 0);
+            grid.add(cardMoreCoins, 1, 0);
+            
+            prevBtn.setDisable(false);
+            prevBtn.setOpacity(1.0);
+            nextBtn.setDisable(true);
+            nextBtn.setOpacity(0.4);
+        }
+        pageLabel.setText("頁面: " + currentPage + " / 2");
     }
 
     // 升級項目的卡片元件
@@ -227,9 +372,9 @@ public class ShopPanel extends VBox {
             this.getStatusSupplier = getStatusSupplier;
 
             this.setAlignment(Pos.CENTER_LEFT);
-            this.setSpacing(6);
-            this.setPadding(new Insets(10, 15, 10, 15));
-            this.setPrefWidth(310);
+            this.setSpacing(4);
+            this.setPadding(new Insets(6, 12, 6, 12));
+            this.setPrefWidth(280);
             this.setStyle(
                 "-fx-background-color: #d7ccc8; " + // 淺米褐色，卡片底色
                 "-fx-border-color: #8d6e63; " +
@@ -240,30 +385,30 @@ public class ShopPanel extends VBox {
 
             // 商品名稱
             Label nameLabel = new Label(name);
-            nameLabel.setFont(Font.font("Microsoft JhengHei", FontWeight.BOLD, 16));
+            nameLabel.setFont(Font.font("Microsoft JhengHei", FontWeight.BOLD, 14));
             nameLabel.setTextFill(Color.web("#3e2723")); // 改為深褐色以確保高對比度
 
             // 目前等級進度條 (例如 [★][★][☆])
             levelStarsLabel = new Label();
-            levelStarsLabel.setFont(Font.font("Microsoft JhengHei", FontWeight.BOLD, 13));
+            levelStarsLabel.setFont(Font.font("Microsoft JhengHei", FontWeight.BOLD, 11));
             levelStarsLabel.setTextFill(Color.web("#e65100")); // 活力橘色
 
             // 描述
             Label descLabel = new Label(description);
-            descLabel.setFont(Font.font("Microsoft JhengHei", FontWeight.NORMAL, 12));
+            descLabel.setFont(Font.font("Microsoft JhengHei", FontWeight.NORMAL, 11));
             descLabel.setTextFill(Color.web("#5d4037")); // 舒適的深棕色
             descLabel.setWrapText(true);
-            descLabel.setMinHeight(30);
+            descLabel.setMinHeight(24);
 
             // 當前狀態 (例如 "目前 HP: 4")
             statusLabel = new Label();
-            statusLabel.setFont(Font.font("Courier New", FontWeight.BOLD, 13));
+            statusLabel.setFont(Font.font("Courier New", FontWeight.BOLD, 11));
             statusLabel.setTextFill(Color.web("#006064")); // 深青色，醒目提示
 
             // 購買按鈕
             buyButton = new Button();
-            buyButton.setFont(Font.font("Microsoft JhengHei", FontWeight.BOLD, 13));
-            buyButton.setPrefWidth(280);
+            buyButton.setFont(Font.font("Microsoft JhengHei", FontWeight.BOLD, 12));
+            buyButton.setPrefWidth(256);
 
             this.getChildren().addAll(nameLabel, levelStarsLabel, descLabel, statusLabel, buyButton);
             updateUI();
@@ -299,6 +444,9 @@ public class ShopPanel extends VBox {
                     "-fx-font-weight: bold; " +
                     "-fx-cursor: default;"
                 );
+                buyButton.setOnMouseEntered(null);
+                buyButton.setOnMouseExited(null);
+                buyButton.setOnAction(null);
             } else {
                 int cost = costs[currentLevel];
                 buyButton.setText(String.format("升級: %d 金幣", cost));
@@ -339,6 +487,8 @@ public class ShopPanel extends VBox {
                             ShopPanel.this.cardMagnet.updateUI();
                             ShopPanel.this.cardMultiplier.updateUI();
                             ShopPanel.this.cardJumps.updateUI();
+                            ShopPanel.this.cardRegen.updateUI();
+                            ShopPanel.this.cardMoreCoins.updateUI();
                         }
                     });
                 } else {
@@ -350,6 +500,9 @@ public class ShopPanel extends VBox {
                         "-fx-font-weight: bold; " +
                         "-fx-cursor: default;"
                     );
+                    buyButton.setOnMouseEntered(null);
+                    buyButton.setOnMouseExited(null);
+                    buyButton.setOnAction(null);
                 }
             }
         }
