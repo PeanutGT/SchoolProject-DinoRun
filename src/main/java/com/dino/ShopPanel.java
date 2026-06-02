@@ -113,6 +113,10 @@ public class ShopPanel extends VBox {
         grid.add(cardMultiplier, 0, 1);
         grid.add(cardJumps, 1, 1);
 
+        // 底部按鈕區塊
+        HBox bottomBox = new HBox(30);
+        bottomBox.setAlignment(Pos.CENTER);
+
         // 返回按鈕
         Button backBtn = new Button("[ 返回主選單 ]");
         backBtn.setStyle(
@@ -144,7 +148,47 @@ public class ShopPanel extends VBox {
             controller.showMainButtons();
         });
 
-        this.getChildren().addAll(titleLabel, coinLabel, grid, backBtn);
+        // 開發者按鈕 (像素風紅橘配色)
+        Button devBtn = new Button("[ 開發者：+100金幣 ]");
+        devBtn.setStyle(
+            "-fx-background-color: transparent; " +
+            "-fx-text-fill: #c62828; " + // 醒目的紅色
+            "-fx-font-family: 'Courier New'; " +
+            "-fx-font-size: 18; " +
+            "-fx-font-weight: bold; " +
+            "-fx-cursor: hand;"
+        );
+        devBtn.setOnMouseEntered(e -> devBtn.setStyle(
+            "-fx-background-color: #c62828; " +
+            "-fx-text-fill: #ffd54f; " + // 黃金字體
+            "-fx-font-family: 'Courier New'; " +
+            "-fx-font-size: 18; " +
+            "-fx-font-weight: bold; " +
+            "-fx-cursor: hand;"
+        ));
+        devBtn.setOnMouseExited(e -> devBtn.setStyle(
+            "-fx-background-color: transparent; " +
+            "-fx-text-fill: #c62828; " +
+            "-fx-font-family: 'Courier New'; " +
+            "-fx-font-size: 18; " +
+            "-fx-font-weight: bold; " +
+            "-fx-cursor: hand;"
+        ));
+        devBtn.setOnAction(e -> {
+            SaveManager.addCoins(100);
+            updateCoinLabel();
+            SoundManager.playScore(); // 播放得分音效
+            
+            // 即時更新所有卡片的購買按鈕狀態與當前數值
+            cardLives.updateUI();
+            cardMagnet.updateUI();
+            cardMultiplier.updateUI();
+            cardJumps.updateUI();
+        });
+
+        bottomBox.getChildren().addAll(backBtn, devBtn);
+
+        this.getChildren().addAll(titleLabel, coinLabel, grid, bottomBox);
     }
 
     private void updateCoinLabel() {

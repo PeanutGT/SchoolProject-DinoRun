@@ -63,6 +63,7 @@ public class GameScene {
 
     private ImageView gameOverImage;
     private ImageView restartImage;
+    private Button gameOverMenuBtn;
     private boolean gameOver = false;
 
     private boolean bossPhase = false;
@@ -146,6 +147,53 @@ public class GameScene {
         restartImage.setY(170);
         restartImage.setVisible(false);
 
+        // 新增遊戲結束時的「返回主選單」按鈕，居中放置在重新開始按鈕下方
+        gameOverMenuBtn = new Button("返回主選單");
+        gameOverMenuBtn.setStyle(
+            "-fx-background-color: #8B4513; " +
+            "-fx-text-fill: white; " +
+            "-fx-border-color: white; " +
+            "-fx-border-width: 2; " +
+            "-fx-font-family: 'Microsoft JhengHei', 'Courier New', monospace; " +
+            "-fx-font-size: 14px; " +
+            "-fx-font-weight: bold; " +
+            "-fx-padding: 6 14; " +
+            "-fx-cursor: hand;"
+        );
+        gameOverMenuBtn.setLayoutX(435);
+        gameOverMenuBtn.setLayoutY(230);
+        gameOverMenuBtn.setVisible(false);
+
+        gameOverMenuBtn.setOnMouseEntered(e -> gameOverMenuBtn.setStyle(
+            "-fx-background-color: #5d4037; " +
+            "-fx-text-fill: #ffca28; " +
+            "-fx-border-color: #ffca28; " +
+            "-fx-border-width: 2; " +
+            "-fx-font-family: 'Microsoft JhengHei', 'Courier New', monospace; " +
+            "-fx-font-size: 14px; " +
+            "-fx-font-weight: bold; " +
+            "-fx-padding: 6 14; " +
+            "-fx-cursor: hand;"
+        ));
+
+        gameOverMenuBtn.setOnMouseExited(e -> gameOverMenuBtn.setStyle(
+            "-fx-background-color: #8B4513; " +
+            "-fx-text-fill: white; " +
+            "-fx-border-color: white; " +
+            "-fx-border-width: 2; " +
+            "-fx-font-family: 'Microsoft JhengHei', 'Courier New', monospace; " +
+            "-fx-font-size: 14px; " +
+            "-fx-font-weight: bold; " +
+            "-fx-padding: 6 14; " +
+            "-fx-cursor: hand;"
+        ));
+
+        gameOverMenuBtn.setOnAction(e -> {
+            if (timer != null) timer.stop();
+            SoundManager.stopGameBgm();
+            dinoMain.showMainMenu();
+        });
+
         restartImage.setOnMouseClicked(e -> {
             if (gameOver) {
                 restartGame();
@@ -192,8 +240,6 @@ public class GameScene {
                 cloud1,
                 cloud2,
                 cloud3,
-                gameOverImage,
-                restartImage,
                 ground1,
                 ground2,
                 signpost,
@@ -216,7 +262,10 @@ public class GameScene {
                 scoreDisplay.getView(),
                 skillDisplay.getView(),
                 barrierCountdownLabel,
-                extraJumpLabel
+                extraJumpLabel,
+                gameOverImage,
+                restartImage,
+                gameOverMenuBtn
         );
 
         createPauseOverlay();
@@ -517,10 +566,12 @@ public class GameScene {
                 
                 gameOverImage.setVisible(true);
                 restartImage.setVisible(true);
+                gameOverMenuBtn.setVisible(true);
             });
         } else {
             gameOverImage.setVisible(true);
             restartImage.setVisible(true);
+            gameOverMenuBtn.setVisible(true);
         }
     }
 
@@ -851,6 +902,7 @@ public class GameScene {
 
         gameOverImage.setVisible(false);
         restartImage.setVisible(false);
+        gameOverMenuBtn.setVisible(false);
 
         dino.reset();
         heartDisplay.update(dino.getLives());

@@ -17,7 +17,7 @@ public class SaveManager {
         if (loaded) return;
         
         // 每次打開遊戲都重設為全新的初始存檔！
-        coins = 100;
+        coins = 0;
         livesLevel = 0;
         magnetLevel = 0;
         multiplierLevel = 0;

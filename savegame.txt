@@ -1,5 +1,5 @@
-coins=65
-livesLevel=1
-magnetLevel=1
-multiplierLevel=1
-extraJumpsLevel=1
+coins=100
+livesLevel=0
+magnetLevel=0
+multiplierLevel=0
+extraJumpsLevel=0
