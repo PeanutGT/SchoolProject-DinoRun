@@ -17,6 +17,7 @@ public class SaveManager {
     private static int resurrectionCount = 0;
     private static int regenLevel = 0;
     private static int moreCoinsLevel = 0;
+    private static int questionBoxLevel = 0;
 
     // 角色解鎖狀態 (dino 預設解鎖，其餘初始為 false)
     private static boolean marioUnlocked = false;
@@ -40,6 +41,7 @@ public class SaveManager {
         resurrectionCount = 0;
         regenLevel = 0;
         moreCoinsLevel = 0;
+        questionBoxLevel = 0;
 
         // 初始時所有進階角色皆鎖定
         marioUnlocked = false;
@@ -63,6 +65,7 @@ public class SaveManager {
             bw.write("resurrectionCount=" + resurrectionCount); bw.newLine();
             bw.write("regenLevel=" + regenLevel); bw.newLine();
             bw.write("moreCoinsLevel=" + moreCoinsLevel); bw.newLine();
+            bw.write("questionBoxLevel=" + questionBoxLevel); bw.newLine();
             bw.write("marioUnlocked=" + marioUnlocked); bw.newLine();
             bw.write("luigiUnlocked=" + luigiUnlocked); bw.newLine();
             bw.write("kirbyUnlocked=" + kirbyUnlocked); bw.newLine();
@@ -140,6 +143,10 @@ public class SaveManager {
     public static int getMoreCoinsLevel() { load(); return moreCoinsLevel; }
     public static void setMoreCoinsLevel(int val) { load(); moreCoinsLevel = val; save(); }
     public static boolean hasMoreCoins() { return getMoreCoinsLevel() > 0; }
+
+    // 4. 問號箱強化
+    public static int getQuestionBoxLevel() { load(); return questionBoxLevel; }
+    public static void setQuestionBoxLevel(int val) { load(); questionBoxLevel = val; save(); }
 
     // 角色解鎖系統
     public static boolean isCharacterUnlocked(String charId) {

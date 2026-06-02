@@ -26,6 +26,7 @@ public class ShopPanel extends VBox {
     private UpgradeCard cardJumps;
     private UpgradeCard cardRegen;
     private UpgradeCard cardMoreCoins;
+    private UpgradeCard cardQuestionBox;
     private CharacterUnlockCard cardCharUnlock;
 
     // 分頁元件
@@ -118,12 +119,18 @@ public class ShopPanel extends VBox {
         // 6. 緩慢自動回血
         cardRegen = new UpgradeCard(
                 "緩慢自動回血",
-                "每過 40 秒自動回復 1 點生命（不超過上限）",
-                new int[] { 100 },
-                1,
+                "Lv1:40秒, Lv2:20秒, Lv3:10秒回復1點生命",
+                new int[] { 100, 200, 300 },
+                3,
                 () -> SaveManager.getRegenLevel(),
                 (lvl) -> SaveManager.setRegenLevel(lvl),
-                () -> SaveManager.hasRegen() ? "目前狀態: 已啟用" : "目前狀態: 未啟用");
+                () -> {
+                    int lvl = SaveManager.getRegenLevel();
+                    if (lvl == 1) return "目前狀態: 40秒回血";
+                    if (lvl == 2) return "目前狀態: 20秒回血";
+                    if (lvl == 3) return "目前狀態: 10秒回血";
+                    return "目前狀態: 未啟用";
+                });
 
         // 7. 提高金幣頻率
         cardMoreCoins = new UpgradeCard(
@@ -134,6 +141,22 @@ public class ShopPanel extends VBox {
                 () -> SaveManager.getMoreCoinsLevel(),
                 (lvl) -> SaveManager.setMoreCoinsLevel(lvl),
                 () -> SaveManager.hasMoreCoins() ? "目前狀態: 已啟用" : "目前狀態: 未啟用");
+
+        // 8. 問號箱強化
+        cardQuestionBox = new UpgradeCard(
+                "問號箱強化",
+                "Lv1:+10金幣 Lv2:+20金幣500分 Lv3:掉2道具",
+                new int[] { 100, 200, 300 },
+                3,
+                () -> SaveManager.getQuestionBoxLevel(),
+                (lvl) -> SaveManager.setQuestionBoxLevel(lvl),
+                () -> {
+                    int lvl = SaveManager.getQuestionBoxLevel();
+                    if (lvl == 1) return "目前: 額外10金幣";
+                    if (lvl == 2) return "目前: 20金幣+500分";
+                    if (lvl == 3) return "目前: 一次掉落2道具";
+                    return "目前狀態: 未啟用";
+                });
 
         // 8. 角色解鎖扭蛋
         cardCharUnlock = new CharacterUnlockCard();
@@ -215,7 +238,7 @@ public class ShopPanel extends VBox {
             }
         });
         nextBtn.setOnAction(e -> {
-            if (currentPage < 2) {
+            if (currentPage < 3) {
                 currentPage++;
                 SoundManager.playJump();
                 updatePageUI();
@@ -291,6 +314,7 @@ public class ShopPanel extends VBox {
             cardJumps.updateUI();
             cardRegen.updateUI();
             cardMoreCoins.updateUI();
+            cardQuestionBox.updateUI();
             cardCharUnlock.updateUI();
         });
 
@@ -316,17 +340,24 @@ public class ShopPanel extends VBox {
             prevBtn.setOpacity(0.4);
             nextBtn.setDisable(false);
             nextBtn.setOpacity(1.0);
-        } else {
+        } else if (currentPage == 2) {
             grid.add(cardRegen, 0, 0);
             grid.add(cardMoreCoins, 1, 0);
-            grid.add(cardCharUnlock, 0, 1, 2, 1); // 角色解鎖卡橫跨兩欄
+            grid.add(cardQuestionBox, 0, 1);
+
+            prevBtn.setDisable(false);
+            prevBtn.setOpacity(1.0);
+            nextBtn.setDisable(false);
+            nextBtn.setOpacity(1.0);
+        } else {
+            grid.add(cardCharUnlock, 0, 0, 2, 1); // 角色解鎖卡橫跨兩欄
 
             prevBtn.setDisable(false);
             prevBtn.setOpacity(1.0);
             nextBtn.setDisable(true);
             nextBtn.setOpacity(0.4);
         }
-        pageLabel.setText("頁面: " + currentPage + " / 2");
+        pageLabel.setText("頁面: " + currentPage + " / 3");
     }
 
     // 升級項目的卡片元件
@@ -472,6 +503,7 @@ public class ShopPanel extends VBox {
                             ShopPanel.this.cardJumps.updateUI();
                             ShopPanel.this.cardRegen.updateUI();
                             ShopPanel.this.cardMoreCoins.updateUI();
+                            ShopPanel.this.cardQuestionBox.updateUI();
                         }
                     });
                 } else {
@@ -622,6 +654,7 @@ public class ShopPanel extends VBox {
             ShopPanel.this.cardJumps.updateUI();
             ShopPanel.this.cardRegen.updateUI();
             ShopPanel.this.cardMoreCoins.updateUI();
+            ShopPanel.this.cardQuestionBox.updateUI();
             this.updateUI();
 
             // 3 秒後清除結果提示

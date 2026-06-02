@@ -169,46 +169,44 @@ public class GameScene {
         // 新增遊戲結束時的「返回主選單」按鈕，居中放置在重新開始按鈕下方
         gameOverMenuBtn = new Button("返回主選單");
         gameOverMenuBtn.setStyle(
-            "-fx-background-color: #8B4513; " +
-            "-fx-text-fill: white; " +
-            "-fx-border-color: white; " +
-            "-fx-border-width: 2; " +
-            "-fx-font-family: 'Microsoft JhengHei', 'Courier New', monospace; " +
-            "-fx-font-size: 14px; " +
-            "-fx-font-weight: bold; " +
-            "-fx-padding: 6 14; " +
-            "-fx-cursor: hand;"
-        );
+                "-fx-background-color: #8B4513; " +
+                        "-fx-text-fill: white; " +
+                        "-fx-border-color: white; " +
+                        "-fx-border-width: 2; " +
+                        "-fx-font-family: 'Microsoft JhengHei', 'Courier New', monospace; " +
+                        "-fx-font-size: 14px; " +
+                        "-fx-font-weight: bold; " +
+                        "-fx-padding: 6 14; " +
+                        "-fx-cursor: hand;");
         gameOverMenuBtn.setLayoutX(435);
         gameOverMenuBtn.setLayoutY(230);
         gameOverMenuBtn.setVisible(false);
 
         gameOverMenuBtn.setOnMouseEntered(e -> gameOverMenuBtn.setStyle(
-            "-fx-background-color: #5d4037; " +
-            "-fx-text-fill: #ffca28; " +
-            "-fx-border-color: #ffca28; " +
-            "-fx-border-width: 2; " +
-            "-fx-font-family: 'Microsoft JhengHei', 'Courier New', monospace; " +
-            "-fx-font-size: 14px; " +
-            "-fx-font-weight: bold; " +
-            "-fx-padding: 6 14; " +
-            "-fx-cursor: hand;"
-        ));
+                "-fx-background-color: #5d4037; " +
+                        "-fx-text-fill: #ffca28; " +
+                        "-fx-border-color: #ffca28; " +
+                        "-fx-border-width: 2; " +
+                        "-fx-font-family: 'Microsoft JhengHei', 'Courier New', monospace; " +
+                        "-fx-font-size: 14px; " +
+                        "-fx-font-weight: bold; " +
+                        "-fx-padding: 6 14; " +
+                        "-fx-cursor: hand;"));
 
         gameOverMenuBtn.setOnMouseExited(e -> gameOverMenuBtn.setStyle(
-            "-fx-background-color: #8B4513; " +
-            "-fx-text-fill: white; " +
-            "-fx-border-color: white; " +
-            "-fx-border-width: 2; " +
-            "-fx-font-family: 'Microsoft JhengHei', 'Courier New', monospace; " +
-            "-fx-font-size: 14px; " +
-            "-fx-font-weight: bold; " +
-            "-fx-padding: 6 14; " +
-            "-fx-cursor: hand;"
-        ));
+                "-fx-background-color: #8B4513; " +
+                        "-fx-text-fill: white; " +
+                        "-fx-border-color: white; " +
+                        "-fx-border-width: 2; " +
+                        "-fx-font-family: 'Microsoft JhengHei', 'Courier New', monospace; " +
+                        "-fx-font-size: 14px; " +
+                        "-fx-font-weight: bold; " +
+                        "-fx-padding: 6 14; " +
+                        "-fx-cursor: hand;"));
 
         gameOverMenuBtn.setOnAction(e -> {
-            if (timer != null) timer.stop();
+            if (timer != null)
+                timer.stop();
             SoundManager.stopGameBgm();
             dinoMain.showMainMenu();
         });
@@ -228,7 +226,8 @@ public class GameScene {
         coinDisplay = new CoinDisplay();
 
         signpost = new Label("【操作說明】\n[上方向鍵] 跳躍\n[空白鍵] 開始/骨頭迴力鏢(Boss戰)\n[下方向鍵] 蹲下\n[自訂技能按鍵] 施放技能");
-        signpost.setStyle("-fx-background-color: #8B4513; -fx-text-fill: white; -fx-border-color: white; -fx-border-width: 2; -fx-font-family: 'Courier New', monospace; -fx-padding: 10; -fx-font-weight: bold;");
+        signpost.setStyle(
+                "-fx-background-color: #8B4513; -fx-text-fill: white; -fx-border-color: white; -fx-border-width: 2; -fx-font-family: 'Courier New', monospace; -fx-padding: 10; -fx-font-weight: bold;");
         signpost.setLayoutX(300);
         signpost.setLayoutY(GameConfig.GROUND_Y - 120);
 
@@ -262,8 +261,7 @@ public class GameScene {
                 ground1,
                 ground2,
                 signpost,
-                dino.getView()
-        );
+                dino.getView());
 
         screenFlash = new Rectangle(screenWidth, GameConfig.SCREEN_HEIGHT, Color.rgb(255, 0, 0, 0.5));
         screenFlash.setVisible(false);
@@ -284,8 +282,7 @@ public class GameScene {
                 extraJumpLabel,
                 gameOverImage,
                 restartImage,
-                gameOverMenuBtn
-        );
+                gameOverMenuBtn);
 
         createPauseOverlay();
         root.getChildren().add(pauseOverlay);
@@ -324,7 +321,8 @@ public class GameScene {
             timer.start();
         });
         menuBtn.setOnAction(e -> {
-            if (timer != null) timer.stop();
+            if (timer != null)
+                timer.stop();
             SoundManager.stopGameBgm();
             dinoMain.showMainMenu();
         });
@@ -459,7 +457,23 @@ public class GameScene {
             if (qb.getHitBoxBounds().intersects(dino.getHitBoxBounds())) {
                 root.getChildren().remove(qb.getView());
                 it.remove();
+                
+                int qbLevel = SaveManager.getQuestionBoxLevel();
+                if (qbLevel >= 1) {
+                    int extraCoins = (qbLevel >= 2) ? 20 : 10;
+                    sessionCoins += extraCoins;
+                    SaveManager.addCoins(extraCoins);
+                    coinDisplay.update(sessionCoins);
+                    showFloatingText("+" + extraCoins + " 金幣", qb.getHitBoxBounds().getMinX(), qb.getHitBoxBounds().getMinY() - 20);
+                }
+                if (qbLevel >= 2) {
+                    distance += 500 * 50; // 500 points
+                }
+
                 giveRandomItem();
+                if (qbLevel >= 3) {
+                    giveRandomItem(); // Give a second item
+                }
             } else if (qb.isOffScreen()) {
                 root.getChildren().remove(qb.getView());
                 it.remove();
@@ -502,7 +516,11 @@ public class GameScene {
         // 處理緩慢自動回血
         if (SaveManager.hasRegen() && !dino.isDead() && dino.getLives() < dino.getMaxLives()) {
             regenTimer += dtSeconds;
-            if (regenTimer >= 40.0) {
+            double targetTime = 40.0;
+            if (SaveManager.getRegenLevel() == 2) targetTime = 20.0;
+            else if (SaveManager.getRegenLevel() == 3) targetTime = 10.0;
+
+            if (regenTimer >= targetTime) {
                 regenTimer = 0.0;
                 dino.healOne();
                 heartDisplay.update(dino.getLives());
@@ -536,7 +554,7 @@ public class GameScene {
                 // 追蹤恐龍的當前座標，優雅回收到手
                 double targetX = dino.getView().getLayoutX() + dino.getView().getBoundsInLocal().getWidth() / 2.0 - 16;
                 double targetY = dino.getView().getLayoutY() + dino.getView().getBoundsInLocal().getHeight() / 2.0 - 16;
-                
+
                 double curX = outX * (1.0 - pct) + targetX * pct;
                 double curY = outY * (1.0 - pct) + targetY * pct;
                 boomerangGroup.setLayoutX(curX);
@@ -549,11 +567,12 @@ public class GameScene {
 
             // 碰撞檢測：擊中 Boss
             if (boomerangActive && !boomerangHasDamaged && bossPhase && boss != null) {
-                if (boomerangHitBox.localToScene(boomerangHitBox.getBoundsInLocal()).intersects(boss.getHitBoxBounds())) {
+                if (boomerangHitBox.localToScene(boomerangHitBox.getBoundsInLocal())
+                        .intersects(boss.getHitBoxBounds())) {
                     boss.takeDamage(10);
                     boomerangHasDamaged = true;
                     SoundManager.playHit(); // 播放擊中音效
-                    
+
                     // 在 Boss 上方飄字
                     double damageX = boss.getHitBoxBounds().getCenterX() - 20;
                     double damageY = boss.getHitBoxBounds().getMinY() - 20;
@@ -588,7 +607,7 @@ public class GameScene {
                     root.getChildren().remove(boomerangGroup);
                     boomerangActive = false;
                 }
-                
+
                 inBossGracePeriod = true;
                 bossGracePeriodStartTime = activeGameTime;
             }
@@ -610,7 +629,8 @@ public class GameScene {
     private void checkCollision() {
         if (bossPhase && boss != null) {
             if (boss.checkCollision(dino.getHitBoxBounds())) {
-                if (barrierActive) return; // 屏障啟動時免傷
+                if (barrierActive)
+                    return; // 屏障啟動時免傷
                 boolean damaged = dino.hit(activeGameTime);
                 if (damaged) {
                     SoundManager.playHit();
@@ -662,10 +682,11 @@ public class GameScene {
                 Optional<String> result = dialog.showAndWait();
                 result.ifPresent(name -> {
                     String cleanName = name.replace(",", "").trim();
-                    if (cleanName.isEmpty()) cleanName = "Unknown";
+                    if (cleanName.isEmpty())
+                        cleanName = "Unknown";
                     LeaderboardManager.addScore(cleanName, score, currentCharacter);
                 });
-                
+
                 gameOverImage.setVisible(true);
                 restartImage.setVisible(true);
                 gameOverMenuBtn.setVisible(true);
@@ -717,7 +738,7 @@ public class GameScene {
         bossIncoming = false;
         bossPhase = true;
         boss = new Boss(root, activeGameTime);
-        
+
         screenFlash.setFill(Color.rgb(255, 0, 0, 0.5));
         screenFlash.setVisible(true);
         screenFlashStartTime = activeGameTime;
@@ -764,7 +785,7 @@ public class GameScene {
         if (ground2.getX() <= -groundWidth) {
             ground2.setX(ground1.getX() + groundWidth);
         }
-        
+
         if (signpost.getLayoutX() > -300) {
             signpost.setLayoutX(signpost.getLayoutX() - speed * dtSeconds);
         }
@@ -777,14 +798,17 @@ public class GameScene {
         cloud2.setX(cloud2.getX() - cloudSpeed);
         cloud3.setX(cloud3.getX() - cloudSpeed);
 
-        if (cloud1.getX() < -100) resetCloud(cloud1);
-        if (cloud2.getX() < -100) resetCloud(cloud2);
-        if (cloud3.getX() < -100) resetCloud(cloud3);
+        if (cloud1.getX() < -100)
+            resetCloud(cloud1);
+        if (cloud2.getX() < -100)
+            resetCloud(cloud2);
+        if (cloud3.getX() < -100)
+            resetCloud(cloud3);
     }
 
     private void updateScore(double dtSeconds) {
         distance += speed * dtSeconds;
-        int newScore = (int)(distance / 50);
+        int newScore = (int) (distance / 50);
 
         if (newScore > score) {
             score = newScore;
@@ -793,7 +817,7 @@ public class GameScene {
                 SoundManager.playScore();
                 scoreDisplay.flashCurrentScore(score);
             }
-            
+
             if (score > 0 && score % GameConfig.QUESTION_BLOCK_INTERVAL == 0 && score != lastQuestionBlockScore) {
                 lastQuestionBlockScore = score;
                 QuestionBlock qb = new QuestionBlock(screenWidth, groundY);
@@ -848,7 +872,7 @@ public class GameScene {
         // 動態縮放機制
         javafx.scene.transform.Scale scale = new javafx.scene.transform.Scale(1, 1);
         root.getTransforms().add(scale);
-        
+
         javafx.beans.value.ChangeListener<Number> sizeListener = (obs, oldVal, newVal) -> {
             double w = scene.getWidth();
             double h = scene.getHeight();
@@ -859,10 +883,10 @@ public class GameScene {
             double scaleX = w / GameConfig.SCREEN_WIDTH;
             double scaleY = h / GameConfig.SCREEN_HEIGHT;
             double minScale = Math.min(scaleX, scaleY);
-            
+
             scale.setX(minScale);
             scale.setY(minScale);
-            
+
             root.setTranslateX((w - GameConfig.SCREEN_WIDTH * minScale) / 2);
             root.setTranslateY((h - GameConfig.SCREEN_HEIGHT * minScale) / 2);
         };
@@ -875,7 +899,8 @@ public class GameScene {
                 togglePause();
                 return;
             }
-            if (isPaused) return;
+            if (isPaused)
+                return;
 
             if (e.getCode() == KeyCode.SPACE && !spacePressed) {
                 spacePressed = true;
@@ -991,7 +1016,8 @@ public class GameScene {
         });
 
         scene.setOnKeyReleased(e -> {
-            if (isPaused) return;
+            if (isPaused)
+                return;
 
             if (e.getCode() == KeyCode.SPACE) {
                 spacePressed = false;
@@ -1009,7 +1035,8 @@ public class GameScene {
     }
 
     private void togglePause() {
-        if (gameOver) return;
+        if (gameOver)
+            return;
 
         isPaused = !isPaused;
         if (isPaused) {
@@ -1056,12 +1083,12 @@ public class GameScene {
         bossIncoming = false;
         bossHasAppeared = false;
         inBossGracePeriod = false;
-        
+
         lastQuestionBlockScore = 0;
         barrierActive = false;
         milkFog.setVisible(false);
         dino.getView().setOpacity(1.0);
-        
+
         for (QuestionBlock qb : questionBlocks) {
             root.getChildren().remove(qb.getView());
         }
@@ -1075,7 +1102,7 @@ public class GameScene {
         lastCoinSpawnScore = 0;
         regenTimer = 0.0;
         coinDisplay.update(sessionCoins);
-        
+
         GameConfig.goldenAppleCount = 0;
         GameConfig.milkBucketCount = 0;
         GameConfig.enchantedBookCount = 0;
@@ -1103,29 +1130,30 @@ public class GameScene {
     }
 
     private void giveRandomItem() {
-        int totalWeight = GameConfig.weightGoldenApple + GameConfig.weightMilkBucket + 
-                          GameConfig.weightEnchantedBook + GameConfig.weightBarrier + GameConfig.weightWoodenSword;
-        int rand = (int)(Math.random() * totalWeight);
-        
+        int totalWeight = GameConfig.weightGoldenApple + GameConfig.weightMilkBucket +
+                GameConfig.weightEnchantedBook + GameConfig.weightBarrier + GameConfig.weightWoodenSword;
+        int rand = (int) (Math.random() * totalWeight);
+
         if (rand < GameConfig.weightGoldenApple) {
-            GameConfig.goldenAppleCount++; 
+            GameConfig.goldenAppleCount++;
             dino.showHint("獲得金蘋果 (Q): 補滿生命值！");
         } else if (rand < GameConfig.weightGoldenApple + GameConfig.weightMilkBucket) {
-            GameConfig.milkBucketCount++; 
+            GameConfig.milkBucketCount++;
             dino.showHint("獲得牛奶 (W): 獲得500pt但致盲視野5秒！");
         } else if (rand < GameConfig.weightGoldenApple + GameConfig.weightMilkBucket + GameConfig.weightEnchantedBook) {
-            GameConfig.enchantedBookCount++; 
+            GameConfig.enchantedBookCount++;
             dino.showHint("獲得附魔書 (E): 獲得額外跳躍次數！");
-        } else if (rand < GameConfig.weightGoldenApple + GameConfig.weightMilkBucket + GameConfig.weightEnchantedBook + GameConfig.weightBarrier) {
-            GameConfig.barrierCount++; 
+        } else if (rand < GameConfig.weightGoldenApple + GameConfig.weightMilkBucket + GameConfig.weightEnchantedBook
+                + GameConfig.weightBarrier) {
+            GameConfig.barrierCount++;
             dino.showHint("獲得屏障 (R): 12秒無敵護盾！");
         } else {
-            GameConfig.woodenSwordCount++; 
+            GameConfig.woodenSwordCount++;
             dino.showHint("獲得木劍 (F): 清除畫面上所有障礙物！(對Boss無效)");
         }
-        
+
         skillDisplay.update();
-        SoundManager.playScore(); 
+        SoundManager.playScore();
     }
 
     private void clearScreenObstacles() {
@@ -1142,13 +1170,13 @@ public class GameScene {
                 // 1. 確實將障礙物的圖片從渲染畫面上拔除
                 root.getChildren().remove(obstacle.getCactus().getView());
                 root.getChildren().remove(obstacle.getBird().getView());
-                
+
                 // 2. 使用 Iterator 安全移除，避免 ConcurrentModificationException
                 iterator.remove();
-                
+
                 // 3. 觸發加分
                 distance += GameConfig.OBSTACLE_CLEAR_SCORE * 50;
-                
+
                 // 4. 紀錄需要補回的物件，避免破壞物件池機制導致後續無障礙物
                 replacementObstacles.add(new ObstacleSlot(GameConfig.SCREEN_WIDTH, groundY));
             }
@@ -1156,7 +1184,8 @@ public class GameScene {
 
         // 將新生成的障礙物補回清單與畫面，並確保 Z-index 正確 (在 UI 層之下)
         int insertIndex = root.getChildren().indexOf(milkFog);
-        if (insertIndex == -1) insertIndex = root.getChildren().size();
+        if (insertIndex == -1)
+            insertIndex = root.getChildren().size();
 
         for (ObstacleSlot newSlot : replacementObstacles) {
             root.getChildren().add(insertIndex, newSlot.getCactus().getView());
@@ -1167,12 +1196,13 @@ public class GameScene {
     }
 
     private boolean isCloudOverlapping(ImageView targetCloud, double newX, double newY) {
-        ImageView[] clouds = {cloud1, cloud2, cloud3};
+        ImageView[] clouds = { cloud1, cloud2, cloud3 };
         double cloudWidth = targetCloud.getBoundsInLocal().getWidth();
         double cloudHeight = targetCloud.getBoundsInLocal().getHeight();
 
         for (ImageView cloud : clouds) {
-            if (cloud == targetCloud) continue;
+            if (cloud == targetCloud)
+                continue;
             double otherX = cloud.getX();
             double otherY = cloud.getY();
             double otherWidth = cloud.getBoundsInLocal().getWidth();
@@ -1181,7 +1211,8 @@ public class GameScene {
             boolean overlapX = newX < otherX + otherWidth + 80 && newX + cloudWidth + 80 > otherX;
             boolean overlapY = newY < otherY + otherHeight + 30 && newY + cloudHeight + 30 > otherY;
 
-            if (overlapX && overlapY) return true;
+            if (overlapX && overlapY)
+                return true;
         }
         return false;
     }
@@ -1226,7 +1257,7 @@ public class GameScene {
         double candidateX = screenWidth;
         boolean safe = false;
         int attempts = 0;
-        
+
         while (!safe && attempts < 10) {
             safe = true;
             for (ObstacleSlot obs : obstacles) {
