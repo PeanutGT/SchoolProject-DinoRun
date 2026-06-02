@@ -239,7 +239,22 @@ public class Boss {
     }
 
     public boolean isDefeated(long activeGameTime) {
-        return activeGameTime - startTime >= GameConfig.BOSS_SURVIVAL_TIME_MS; // 存活滿指定時間即算擊退
+        return hp <= 0 || (activeGameTime - startTime >= GameConfig.BOSS_SURVIVAL_TIME_MS); // 存活滿指定時間或HP歸零即算擊退
+    }
+
+    public void takeDamage(int amount) {
+        this.hp -= amount;
+        if (this.hp < 0) {
+            this.hp = 0;
+        }
+    }
+
+    public int getHp() {
+        return this.hp;
+    }
+
+    public double getX() {
+        return this.x;
     }
 
     public void removeAllProjectiles() {

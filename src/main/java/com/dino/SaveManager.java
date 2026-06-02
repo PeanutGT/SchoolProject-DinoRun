@@ -1,6 +1,8 @@
 package com.dino;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SaveManager {
     private static final String FILE_PATH = "savegame.txt";
@@ -15,6 +17,14 @@ public class SaveManager {
     private static int resurrectionCount = 0;
     private static int regenLevel = 0;
     private static int moreCoinsLevel = 0;
+
+    // 角色解鎖狀態 (dino 預設解鎖，其餘初始為 false)
+    private static boolean marioUnlocked = false;
+    private static boolean luigiUnlocked = false;
+    private static boolean kirbyUnlocked = false;
+    private static boolean lucarioUnlocked = false;
+    private static boolean sonicUnlocked = false;
+    private static boolean steveUnlocked = false;
     
     private static boolean loaded = false;
 
@@ -30,6 +40,14 @@ public class SaveManager {
         resurrectionCount = 0;
         regenLevel = 0;
         moreCoinsLevel = 0;
+
+        // 初始時所有進階角色皆鎖定
+        marioUnlocked = false;
+        luigiUnlocked = false;
+        kirbyUnlocked = false;
+        lucarioUnlocked = false;
+        sonicUnlocked = false;
+        steveUnlocked = false;
         
         save(); // 立即寫入檔案，覆蓋舊有存檔
         loaded = true;
@@ -45,6 +63,12 @@ public class SaveManager {
             bw.write("resurrectionCount=" + resurrectionCount); bw.newLine();
             bw.write("regenLevel=" + regenLevel); bw.newLine();
             bw.write("moreCoinsLevel=" + moreCoinsLevel); bw.newLine();
+            bw.write("marioUnlocked=" + marioUnlocked); bw.newLine();
+            bw.write("luigiUnlocked=" + luigiUnlocked); bw.newLine();
+            bw.write("kirbyUnlocked=" + kirbyUnlocked); bw.newLine();
+            bw.write("lucarioUnlocked=" + lucarioUnlocked); bw.newLine();
+            bw.write("sonicUnlocked=" + sonicUnlocked); bw.newLine();
+            bw.write("steveUnlocked=" + steveUnlocked); bw.newLine();
         } catch (Exception e) {
             System.err.println("寫入存檔失敗: " + e.getMessage());
         }
@@ -116,4 +140,65 @@ public class SaveManager {
     public static int getMoreCoinsLevel() { load(); return moreCoinsLevel; }
     public static void setMoreCoinsLevel(int val) { load(); moreCoinsLevel = val; save(); }
     public static boolean hasMoreCoins() { return getMoreCoinsLevel() > 0; }
+
+    // 角色解鎖系統
+    public static boolean isCharacterUnlocked(String charId) {
+        load();
+        switch (charId) {
+            case "dino":    return true;  // Dino 預設永遠解鎖
+            case "mario":   return marioUnlocked;
+            case "luigi":   return luigiUnlocked;
+            case "kirby":   return kirbyUnlocked;
+            case "lucario": return lucarioUnlocked;
+            case "sonic":   return sonicUnlocked;
+            case "steve":   return steveUnlocked;
+            default:        return false;
+        }
+    }
+
+    public static void unlockCharacter(String charId) {
+        load();
+        switch (charId) {
+            case "mario":   marioUnlocked = true; break;
+            case "luigi":   luigiUnlocked = true; break;
+            case "kirby":   kirbyUnlocked = true; break;
+            case "lucario": lucarioUnlocked = true; break;
+            case "sonic":   sonicUnlocked = true; break;
+            case "steve":   steveUnlocked = true; break;
+        }
+        save();
+    }
+
+    /** 回傳除了 dino 之外已解鎖的角色數量（0 ~ 6）*/
+    public static int getUnlockedCharactersCount() {
+        load();
+        int count = 0;
+        if (marioUnlocked)   count++;
+        if (luigiUnlocked)   count++;
+        if (kirbyUnlocked)   count++;
+        if (lucarioUnlocked) count++;
+        if (sonicUnlocked)   count++;
+        if (steveUnlocked)   count++;
+        return count;
+    }
+
+    /**
+     * 隨機解鎖一位尚未解鎖的角色，並返回其 ID。
+     * 若所有角色皆已解鎖則返回 null。
+     */
+    public static String unlockRandomCharacter() {
+        load();
+        List<String> locked = new ArrayList<>();
+        if (!marioUnlocked)   locked.add("mario");
+        if (!luigiUnlocked)   locked.add("luigi");
+        if (!kirbyUnlocked)   locked.add("kirby");
+        if (!lucarioUnlocked) locked.add("lucario");
+        if (!sonicUnlocked)   locked.add("sonic");
+        if (!steveUnlocked)   locked.add("steve");
+        if (locked.isEmpty()) return null;
+
+        String chosen = locked.get((int)(Math.random() * locked.size()));
+        unlockCharacter(chosen);
+        return chosen;
+    }
 }

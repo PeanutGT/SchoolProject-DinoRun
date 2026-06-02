@@ -1,5 +1,6 @@
 package com.dino;
 
+import javafx.animation.PauseTransition;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
@@ -12,6 +13,8 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
+import javafx.util.Duration;
 
 public class CharacterSelectScene {
 
@@ -51,7 +54,7 @@ public class CharacterSelectScene {
         layout.setMaxSize(BASE_WIDTH, BASE_HEIGHT);
 
         titleLabel = new Label(mode == Mode.SINGLE ? "選擇角色" : "雙人對戰選角");
-        titleLabel.setFont(Font.font(34));
+        titleLabel.setFont(Font.font("Microsoft JhengHei", FontWeight.BOLD, 34));
 
         turnLabel = new Label();
         turnLabel.setFont(Font.font(18));
@@ -59,8 +62,9 @@ public class CharacterSelectScene {
         cards = new HBox(28);
         cards.setAlignment(Pos.CENTER);
 
-        Label helpLabel = new Label("方向鍵選擇    Enter 確認    Esc 返回");
-        helpLabel.setFont(Font.font(15));
+        Label helpLabel = new Label("方向鍵選擇    Enter 確認    Esc 返回    [ ? = 尚未解鎖，請至商店購買 ]");
+        helpLabel.setFont(Font.font(13));
+        helpLabel.setTextFill(Color.rgb(120, 80, 50));
 
         layout.getChildren().addAll(titleLabel, turnLabel, cards, helpLabel);
         root.getChildren().add(layout);
@@ -78,27 +82,54 @@ public class CharacterSelectScene {
     }
 
     private VBox createCard(int index) {
+        boolean isSelected = (index == selectedIndex);
+        boolean unlocked = SaveManager.isCharacterUnlocked(CHARACTER_IDS[index]);
+
         VBox card = new VBox(12);
         card.setAlignment(Pos.CENTER);
         card.setPrefSize(150, 150);
 
         Rectangle frame = new Rectangle(126, 94);
-        frame.setFill(index == selectedIndex ? Color.rgb(232, 234, 237) : Color.WHITE);
-        frame.setStroke(index == selectedIndex ? Color.rgb(32, 33, 36) : Color.rgb(95, 99, 104));
-        frame.setStrokeWidth(index == selectedIndex ? 4 : 2);
+        if (!unlocked) {
+            // 鎖定狀態：深暗框、半透明灰色背景
+            frame.setFill(isSelected ? Color.rgb(60, 40, 30) : Color.rgb(40, 40, 40));
+            frame.setStroke(isSelected ? Color.web("#FFD54F") : Color.rgb(100, 100, 100));
+            frame.setStrokeWidth(isSelected ? 4 : 2);
+        } else {
+            frame.setFill(isSelected ? Color.rgb(232, 234, 237) : Color.WHITE);
+            frame.setStroke(isSelected ? Color.rgb(32, 33, 36) : Color.rgb(95, 99, 104));
+            frame.setStrokeWidth(isSelected ? 4 : 2);
+        }
 
-        ImageView preview = new ImageView(ResourceManager.getImage(PREVIEW_IMAGES[index]));
-        preview.setSmooth(false);
-        preview.setFitWidth("sonic".equals(CHARACTER_IDS[index]) ? 58 : 52);
-        preview.setPreserveRatio(true);
+        Pane previewPane = new Pane(frame);
+        previewPane.setPrefSize(126, 94);
 
-        Pane previewPane = new Pane(frame, preview);
-        preview.setLayoutX(48);
-        preview.setLayoutY(28);
+        if (unlocked) {
+            // 已解鎖：正常顯示角色頭像
+            ImageView preview = new ImageView(ResourceManager.getImage(PREVIEW_IMAGES[index]));
+            preview.setSmooth(false);
+            preview.setFitWidth("sonic".equals(CHARACTER_IDS[index]) ? 58 : 52);
+            preview.setPreserveRatio(true);
+            preview.setLayoutX(48);
+            preview.setLayoutY(28);
+            previewPane.getChildren().add(preview);
+        } else {
+            // 未解鎖：顯示大問號
+            Label qMark = new Label("?");
+            qMark.setFont(Font.font("Arial", FontWeight.BOLD, 48));
+            qMark.setTextFill(isSelected ? Color.web("#FFD54F") : Color.rgb(150, 150, 150));
+            qMark.setLayoutX(38);
+            qMark.setLayoutY(18);
+            previewPane.getChildren().add(qMark);
+        }
 
-        Label name = new Label(CHARACTER_NAMES[index]);
-        name.setFont(Font.font(17));
-        name.setTextFill(index == selectedIndex ? Color.BLACK : Color.rgb(95, 99, 104));
+        Label name = new Label(unlocked ? CHARACTER_NAMES[index] : "???");
+        name.setFont(Font.font("Microsoft JhengHei", FontWeight.BOLD, 17));
+        if (!unlocked) {
+            name.setTextFill(isSelected ? Color.web("#FFD54F") : Color.rgb(120, 120, 120));
+        } else {
+            name.setTextFill(isSelected ? Color.BLACK : Color.rgb(95, 99, 104));
+        }
 
         card.getChildren().addAll(previewPane, name);
         return card;
@@ -128,6 +159,21 @@ public class CharacterSelectScene {
 
     private void confirmSelection() {
         String selectedCharacter = CHARACTER_IDS[selectedIndex];
+
+        // 若未解鎖，拒絕選取並顯示警告
+        if (!SaveManager.isCharacterUnlocked(selectedCharacter)) {
+            SoundManager.playHit();
+            String originalTitle = mode == Mode.SINGLE ? "選擇角色" : "雙人對戰選角";
+            titleLabel.setText("⚠ 此角色尚未解鎖！請至商店花費 100 金幣購買！");
+            titleLabel.setTextFill(Color.RED);
+            PauseTransition pause = new PauseTransition(Duration.seconds(2));
+            pause.setOnFinished(ev -> {
+                titleLabel.setText(originalTitle);
+                titleLabel.setTextFill(Color.BLACK);
+            });
+            pause.play();
+            return;
+        }
 
         if (mode == Mode.SINGLE) {
             dinoMain.startSinglePlayerGame(selectedCharacter);

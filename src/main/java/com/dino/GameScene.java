@@ -25,6 +25,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
+import javafx.scene.Group;
 
 public class GameScene {
 
@@ -98,7 +99,24 @@ public class GameScene {
     private int lastCoinSpawnScore = 0;
 
     private boolean spacePressed = false;
+    private boolean upPressed = false;
     private boolean jumpAfterRestart = false;
+
+    // 骨頭迴力鏢變數
+    private Group boomerangGroup;
+    private ImageView boomerangView;
+    private Rectangle boomerangHitBox;
+    private boolean boomerangActive = false;
+    private double boomerangTime = 0.0;
+    private double boomerangStartX = 0.0;
+    private double boomerangStartY = 0.0;
+    private boolean boomerangHasDamaged = false;
+    private double boomerangMaxDist = 350.0;
+
+    // Boss 生命條 UI 變數
+    private Pane bossHealthBarContainer;
+    private Rectangle bossHealthInnerBar;
+    private Label bossHealthLabel;
 
     // Game Clock
     private long activeGameTime = 0;
@@ -209,7 +227,7 @@ public class GameScene {
         coinsList = new ArrayList<>();
         coinDisplay = new CoinDisplay();
 
-        signpost = new Label("【操作說明】\n[空白鍵] 跳躍/開始\n[下方向鍵] 蹲下\n[自訂技能按鍵] 施放技能");
+        signpost = new Label("【操作說明】\n[上方向鍵] 跳躍\n[空白鍵] 開始/骨頭迴力鏢(Boss戰)\n[下方向鍵] 蹲下\n[自訂技能按鍵] 施放技能");
         signpost.setStyle("-fx-background-color: #8B4513; -fx-text-fill: white; -fx-border-color: white; -fx-border-width: 2; -fx-font-family: 'Courier New', monospace; -fx-padding: 10; -fx-font-weight: bold;");
         signpost.setLayoutX(300);
         signpost.setLayoutY(GameConfig.GROUND_Y - 120);
@@ -272,7 +290,7 @@ public class GameScene {
         createPauseOverlay();
         root.getChildren().add(pauseOverlay);
 
-        dino.showHint("按空白鍵開始！");
+        dino.showHint("按空白鍵或上鍵開始！");
         startGameLoop();
     }
 
@@ -495,12 +513,81 @@ public class GameScene {
             regenTimer = 0.0; // 如果滿血或沒有該功能，重置計時器
         }
 
+        // 處理骨頭迴力鏢運動與碰撞
+        if (boomerangActive) {
+            boomerangTime += dtSeconds;
+            // 快速自轉
+            boomerangView.setRotate(boomerangView.getRotate() + dtSeconds * 720.0);
+
+            double duration = 0.5;
+            double outward = 0.25;
+            double maxDist = boomerangMaxDist;
+
+            if (boomerangTime < outward) {
+                double pct = boomerangTime / outward;
+                double curX = boomerangStartX + maxDist * pct;
+                double curY = boomerangStartY;
+                boomerangGroup.setLayoutX(curX);
+                boomerangGroup.setLayoutY(curY);
+            } else if (boomerangTime < duration) {
+                double pct = (boomerangTime - outward) / outward;
+                double outX = boomerangStartX + maxDist;
+                double outY = boomerangStartY;
+                // 追蹤恐龍的當前座標，優雅回收到手
+                double targetX = dino.getView().getLayoutX() + dino.getView().getBoundsInLocal().getWidth() / 2.0 - 16;
+                double targetY = dino.getView().getLayoutY() + dino.getView().getBoundsInLocal().getHeight() / 2.0 - 16;
+                
+                double curX = outX * (1.0 - pct) + targetX * pct;
+                double curY = outY * (1.0 - pct) + targetY * pct;
+                boomerangGroup.setLayoutX(curX);
+                boomerangGroup.setLayoutY(curY);
+            } else {
+                // 回收到手，銷毀
+                root.getChildren().remove(boomerangGroup);
+                boomerangActive = false;
+            }
+
+            // 碰撞檢測：擊中 Boss
+            if (boomerangActive && !boomerangHasDamaged && bossPhase && boss != null) {
+                if (boomerangHitBox.localToScene(boomerangHitBox.getBoundsInLocal()).intersects(boss.getHitBoxBounds())) {
+                    boss.takeDamage(10);
+                    boomerangHasDamaged = true;
+                    SoundManager.playHit(); // 播放擊中音效
+                    
+                    // 在 Boss 上方飄字
+                    double damageX = boss.getHitBoxBounds().getCenterX() - 20;
+                    double damageY = boss.getHitBoxBounds().getMinY() - 20;
+                    showFloatingText("-10 HP", damageX, damageY);
+                }
+            }
+        }
+
         if (bossPhase && boss != null) {
             boss.update(speed, activeGameTime, dtSeconds);
+
+            // 更新 Boss 生命條 UI
+            if (bossHealthBarContainer != null && bossHealthInnerBar != null && bossHealthLabel != null) {
+                double hpPct = (double) boss.getHp() / 100.0;
+                bossHealthInnerBar.setWidth(296 * hpPct);
+                bossHealthLabel.setText("BOSS: Bowser (" + boss.getHp() + "/100)");
+            }
+
             if (boss.isDefeated(activeGameTime)) {
                 bossPhase = false;
                 boss.removeAllProjectiles();
                 boss = null;
+
+                // 銷毀生命條 UI
+                if (bossHealthBarContainer != null) {
+                    root.getChildren().remove(bossHealthBarContainer);
+                    bossHealthBarContainer = null;
+                }
+
+                // 銷毀在場上的迴力鏢
+                if (boomerangActive) {
+                    root.getChildren().remove(boomerangGroup);
+                    boomerangActive = false;
+                }
                 
                 inBossGracePeriod = true;
                 bossGracePeriodStartTime = activeGameTime;
@@ -634,6 +721,37 @@ public class GameScene {
         screenFlash.setFill(Color.rgb(255, 0, 0, 0.5));
         screenFlash.setVisible(true);
         screenFlashStartTime = activeGameTime;
+
+        // 創建 Boss 生命值血條 UI
+        bossHealthBarContainer = new Pane();
+        bossHealthBarContainer.setLayoutX(GameConfig.SCREEN_WIDTH / 2 - 150);
+        bossHealthBarContainer.setLayoutY(20);
+
+        Rectangle bgBar = new Rectangle(300, 16);
+        bgBar.setFill(Color.DARKGRAY);
+        bgBar.setStroke(Color.WHITE);
+        bgBar.setStrokeWidth(2);
+
+        bossHealthInnerBar = new Rectangle(296, 12);
+        bossHealthInnerBar.setX(2);
+        bossHealthInnerBar.setY(2);
+        bossHealthInnerBar.setFill(Color.RED);
+
+        bossHealthLabel = new Label("BOSS: Bowser (100/100)");
+        bossHealthLabel.setFont(Font.font("Courier New", FontWeight.BOLD, 14));
+        bossHealthLabel.setTextFill(Color.WHITE);
+        bossHealthLabel.setLayoutY(-18);
+        bossHealthLabel.setLayoutX(0);
+        bossHealthLabel.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 2, 0, 1, 1);");
+
+        bossHealthBarContainer.getChildren().addAll(bgBar, bossHealthInnerBar, bossHealthLabel);
+
+        int insertIndex = root.getChildren().indexOf(milkFog);
+        if (insertIndex != -1) {
+            root.getChildren().add(insertIndex, bossHealthBarContainer);
+        } else {
+            root.getChildren().add(bossHealthBarContainer);
+        }
     }
 
     private void updateGround(double dtSeconds) {
@@ -765,6 +883,26 @@ public class GameScene {
                     waitingToStart = false;
                     dino.hideHint();
                     SoundManager.playGameBgm();
+                    return;
+                }
+                if (gameOver) {
+                    restartGame();
+                    waitingToStart = false;
+                    dino.hideHint();
+                    SoundManager.playGameBgm();
+                } else {
+                    if (bossPhase && boss != null) {
+                        throwBoomerang();
+                    }
+                }
+            }
+
+            if (e.getCode() == KeyCode.UP && !upPressed) {
+                upPressed = true;
+                if (waitingToStart) {
+                    waitingToStart = false;
+                    dino.hideHint();
+                    SoundManager.playGameBgm();
                     if (dino.jump()) {
                         SoundManager.playJump();
                     }
@@ -784,6 +922,7 @@ public class GameScene {
                     }
                 }
             }
+
             if (waitingToStart) {
                 return;
             }
@@ -856,6 +995,9 @@ public class GameScene {
 
             if (e.getCode() == KeyCode.SPACE) {
                 spacePressed = false;
+            }
+            if (e.getCode() == KeyCode.UP) {
+                upPressed = false;
                 if (!gameOver) {
                     dino.releaseJump();
                 }
@@ -894,13 +1036,21 @@ public class GameScene {
         jumpAfterRestart = false;
         waitingToStart = true;
         signpost.setLayoutX(300);
-        dino.showHint("按空白鍵開始！");
+        dino.showHint("按空白鍵或上鍵開始！");
         activeGameTime = 0;
         lastFrameTime = 0;
 
         if (boss != null) {
             boss.removeAllProjectiles();
             boss = null;
+        }
+        if (boomerangActive) {
+            root.getChildren().remove(boomerangGroup);
+            boomerangActive = false;
+        }
+        if (bossHealthBarContainer != null) {
+            root.getChildren().remove(bossHealthBarContainer);
+            bossHealthBarContainer = null;
         }
         bossPhase = false;
         bossIncoming = false;
@@ -1092,6 +1242,62 @@ public class GameScene {
             attempts++;
         }
         return candidateX;
+    }
+
+    private void throwBoomerang() {
+        if (boomerangActive) {
+            return; // 迴力鏢尚未回收，無法再次拋出
+        }
+
+        Image boneImg = ResourceManager.getImage("bone.png");
+        if (boneImg == null) {
+            return;
+        }
+
+        boomerangView = new ImageView(boneImg);
+        boomerangView.setFitWidth(32);
+        boomerangView.setFitHeight(32);
+        boomerangView.setSmooth(false);
+
+        // 碰撞箱 (與圖片大小相當)
+        boomerangHitBox = new Rectangle(0, 0, 32, 32);
+        boomerangHitBox.setVisible(false);
+
+        boomerangGroup = new Group(boomerangView, boomerangHitBox);
+
+        double dinoWidth = dino.getView().getBoundsInLocal().getWidth();
+        double dinoHeight = dino.getView().getBoundsInLocal().getHeight();
+        double startX = dino.getView().getLayoutX() + dinoWidth - 10;
+        double startY = dino.getView().getLayoutY() + dinoHeight / 2 - 16;
+
+        // 動態計算丟到 Boss 的長度
+        double targetDist = 350.0;
+        if (bossPhase && boss != null) {
+            double bossX = boss.getX() + 42.0; // 庫巴的中心 X (寬度為 84，中心在 +42)
+            double dinoX = dino.getView().getLayoutX() + dinoWidth / 2.0;
+            double distanceToBoss = (bossX - dinoX) + 20.0; // 多飛 20 像素確保覆蓋與碰撞
+            targetDist = Math.max(350.0, distanceToBoss);
+        }
+        boomerangMaxDist = targetDist;
+
+        boomerangGroup.setLayoutX(startX);
+        boomerangGroup.setLayoutY(startY);
+        boomerangStartX = startX;
+        boomerangStartY = startY;
+
+        boomerangActive = true;
+        boomerangTime = 0.0;
+        boomerangHasDamaged = false;
+
+        // 播放拋擲迴力鏢音效
+        SoundManager.playScore();
+
+        int insertIndex = root.getChildren().indexOf(milkFog);
+        if (insertIndex != -1) {
+            root.getChildren().add(insertIndex, boomerangGroup);
+        } else {
+            root.getChildren().add(boomerangGroup);
+        }
     }
 
     public Pane getView() {

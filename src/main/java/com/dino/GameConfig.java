@@ -20,7 +20,7 @@ public class GameConfig {
 
     // Boss 戰設定
     public static final int BOSS_TRIGGER_SCORE = 500;
-    public static final int BOSS_HP = 1000;
+    public static final int BOSS_HP = 100;
     public static final long BOSS_SURVIVAL_TIME_MS = 30000;
     public static final long BOSS_RETREAT_GRACE_PERIOD_MS = 2000;
     public static final double BOSS_SLAM_JUMP_VELOCITY = -8 * 60;
