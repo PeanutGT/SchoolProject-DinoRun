@@ -708,18 +708,19 @@ public class GameScene {
         isPaused = !isPaused;
         if (isPaused) {
             timer.stop();
-            SoundManager.stopGameBgm();
+            SoundManager.pauseGameBgm();
             pauseOverlay.setVisible(true);
         } else {
             pauseOverlay.setVisible(false);
             root.requestFocus(); // 將焦點還給遊戲容器
             lastFrameTime = 0; // 重置時間計算
             timer.start();
-            SoundManager.playGameBgm();
+            SoundManager.resumeGameBgm();
         }
     }
 
     private void restartGame() {
+        SoundManager.stopGameBgm(); // 確保重新開始前會停止並銷毀當前音樂
         gameOver = false;
         score = 0;
         distance = 0;

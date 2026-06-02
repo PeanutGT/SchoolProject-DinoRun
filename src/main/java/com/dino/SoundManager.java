@@ -181,6 +181,18 @@ public class SoundManager {
         }
     }
 
+    public static void pauseGameBgm() {
+        if (currentGameBgm != null) {
+            currentGameBgm.pause();
+        }
+    }
+
+    public static void resumeGameBgm() {
+        if (currentGameBgm != null) {
+            currentGameBgm.play();
+        }
+    }
+
     public static void setMasterVolume(double v) {
         GameConfig.masterVolume = v;
         updateMusicVolume();
