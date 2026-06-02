@@ -30,10 +30,10 @@ public class ShopPanel extends VBox {
         this.setSpacing(15);
         this.setPadding(new Insets(20));
         
-        // 復古精緻木質感背景樣式
+        // 復古精緻淺色米質背景樣式
         this.setStyle(
-            "-fx-background-color: #3e2723; " + // 深褐色
-            "-fx-border-color: #d7ccc8; " +      // 淺米邊框
+            "-fx-background-color: #efebe9; " + // 淺米色 / 羊皮紙色
+            "-fx-border-color: #5d4037; " +      // 深邊框
             "-fx-border-width: 4; " +
             "-fx-border-style: solid; " +
             "-fx-background-radius: 8; " +
@@ -44,15 +44,15 @@ public class ShopPanel extends VBox {
 
         // 標題
         Label titleLabel = new Label("★ 恐龍進化商店 ★");
-        titleLabel.setFont(Font.font("Courier New", FontWeight.BOLD, 28));
-        titleLabel.setTextFill(Color.web("#ffd54f")); // 明亮黃金
-        DropShadow titleShadow = new DropShadow(4, Color.BLACK);
+        titleLabel.setFont(Font.font("Microsoft JhengHei", FontWeight.BOLD, 28));
+        titleLabel.setTextFill(Color.web("#3e2723")); // 改為深褐色以確保高對比度
+        DropShadow titleShadow = new DropShadow(2, Color.web("#d7ccc8"));
         titleLabel.setEffect(titleShadow);
 
         // 金幣餘額顯示
         coinLabel = new Label();
-        coinLabel.setFont(Font.font("Courier New", FontWeight.BOLD, 20));
-        coinLabel.setTextFill(Color.web("#ffca28"));
+        coinLabel.setFont(Font.font("Microsoft JhengHei", FontWeight.BOLD, 20));
+        coinLabel.setTextFill(Color.web("#5d4037")); // 改為深褐色以確保高對比度
         updateCoinLabel();
 
         // 網格佈局放置 4 個商品
@@ -65,7 +65,7 @@ public class ShopPanel extends VBox {
         cardLives = new UpgradeCard(
             "永久生命上限",
             "開始遊戲時獲得額外生命（上限 6）",
-            new int[]{100, 250, 500}, // 升級費用
+            new int[]{10, 25, 50}, // 升級費用
             3,
             () -> SaveManager.getLivesLevel(),
             (lvl) -> SaveManager.setLivesLevel(lvl),
@@ -76,7 +76,7 @@ public class ShopPanel extends VBox {
         cardMagnet = new UpgradeCard(
             "金幣磁鐵效果",
             "自動吸引一定半徑內的所有金幣",
-            new int[]{150, 300, 600},
+            new int[]{15, 30, 60},
             3,
             () -> SaveManager.getMagnetLevel(),
             (lvl) -> SaveManager.setMagnetLevel(lvl),
@@ -90,7 +90,7 @@ public class ShopPanel extends VBox {
         cardMultiplier = new UpgradeCard(
             "金幣獲取倍率",
             "獲得金幣時的倍率加成（最高 5 倍）",
-            new int[]{200, 400, 800},
+            new int[]{20, 40, 80},
             3,
             () -> SaveManager.getMultiplierLevel(),
             (lvl) -> SaveManager.setMultiplierLevel(lvl),
@@ -101,7 +101,7 @@ public class ShopPanel extends VBox {
         cardJumps = new UpgradeCard(
             "永久空中多段跳",
             "初始即可在空中多段跳躍，不需吃書",
-            new int[]{300, 700},
+            new int[]{30, 70},
             2,
             () -> SaveManager.getExtraJumpsLevel(),
             (lvl) -> SaveManager.setExtraJumpsLevel(lvl),
@@ -117,7 +117,7 @@ public class ShopPanel extends VBox {
         Button backBtn = new Button("[ 返回主選單 ]");
         backBtn.setStyle(
             "-fx-background-color: transparent; " +
-            "-fx-text-fill: #bcaaa4; " +
+            "-fx-text-fill: #5d4037; " +
             "-fx-font-family: 'Courier New'; " +
             "-fx-font-size: 18; " +
             "-fx-font-weight: bold; " +
@@ -125,7 +125,7 @@ public class ShopPanel extends VBox {
         );
         backBtn.setOnMouseEntered(e -> backBtn.setStyle(
             "-fx-background-color: #5d4037; " +
-            "-fx-text-fill: #ffca28; " +
+            "-fx-text-fill: white; " +
             "-fx-font-family: 'Courier New'; " +
             "-fx-font-size: 18; " +
             "-fx-font-weight: bold; " +
@@ -133,7 +133,7 @@ public class ShopPanel extends VBox {
         ));
         backBtn.setOnMouseExited(e -> backBtn.setStyle(
             "-fx-background-color: transparent; " +
-            "-fx-text-fill: #bcaaa4; " +
+            "-fx-text-fill: #5d4037; " +
             "-fx-font-family: 'Courier New'; " +
             "-fx-font-size: 18; " +
             "-fx-font-weight: bold; " +
@@ -148,7 +148,7 @@ public class ShopPanel extends VBox {
     }
 
     private void updateCoinLabel() {
-        coinLabel.setText("🪙 擁有金幣: " + SaveManager.getCoins() + " 🪙");
+        coinLabel.setText("★ 目前擁有金幣: " + SaveManager.getCoins() + " ★");
     }
 
     // 升級項目的卡片元件
@@ -187,7 +187,7 @@ public class ShopPanel extends VBox {
             this.setPadding(new Insets(10, 15, 10, 15));
             this.setPrefWidth(310);
             this.setStyle(
-                "-fx-background-color: #4e342e; " + // 稍淺的可可色
+                "-fx-background-color: #d7ccc8; " + // 淺米褐色，卡片底色
                 "-fx-border-color: #8d6e63; " +
                 "-fx-border-width: 2; " +
                 "-fx-background-radius: 6; " +
@@ -196,29 +196,29 @@ public class ShopPanel extends VBox {
 
             // 商品名稱
             Label nameLabel = new Label(name);
-            nameLabel.setFont(Font.font("System", FontWeight.BOLD, 15));
-            nameLabel.setTextFill(Color.WHITE);
+            nameLabel.setFont(Font.font("Microsoft JhengHei", FontWeight.BOLD, 16));
+            nameLabel.setTextFill(Color.web("#3e2723")); // 改為深褐色以確保高對比度
 
             // 目前等級進度條 (例如 [★][★][☆])
             levelStarsLabel = new Label();
-            levelStarsLabel.setFont(Font.font("System", FontWeight.BOLD, 13));
-            levelStarsLabel.setTextFill(Color.web("#ffd54f"));
+            levelStarsLabel.setFont(Font.font("Microsoft JhengHei", FontWeight.BOLD, 13));
+            levelStarsLabel.setTextFill(Color.web("#e65100")); // 活力橘色
 
             // 描述
             Label descLabel = new Label(description);
-            descLabel.setFont(Font.font("System", 11));
-            descLabel.setTextFill(Color.web("#d7ccc8"));
+            descLabel.setFont(Font.font("Microsoft JhengHei", FontWeight.NORMAL, 12));
+            descLabel.setTextFill(Color.web("#5d4037")); // 舒適的深棕色
             descLabel.setWrapText(true);
             descLabel.setMinHeight(30);
 
             // 當前狀態 (例如 "目前 HP: 4")
             statusLabel = new Label();
-            statusLabel.setFont(Font.font("Courier New", FontWeight.BOLD, 12));
-            statusLabel.setTextFill(Color.web("#80deea")); // 亮青色
+            statusLabel.setFont(Font.font("Courier New", FontWeight.BOLD, 13));
+            statusLabel.setTextFill(Color.web("#006064")); // 深青色，醒目提示
 
             // 購買按鈕
             buyButton = new Button();
-            buyButton.setFont(Font.font("System", FontWeight.BOLD, 12));
+            buyButton.setFont(Font.font("Microsoft JhengHei", FontWeight.BOLD, 13));
             buyButton.setPrefWidth(280);
 
             this.getChildren().addAll(nameLabel, levelStarsLabel, descLabel, statusLabel, buyButton);
@@ -250,14 +250,14 @@ public class ShopPanel extends VBox {
                 buyButton.setText("已封頂 (MAX)");
                 buyButton.setDisable(true);
                 buyButton.setStyle(
-                    "-fx-background-color: #757575; " +
-                    "-fx-text-fill: #e0e0e0; " +
+                    "-fx-background-color: #cfd8dc; " + // 淺灰藍，標準淺色滿等樣式
+                    "-fx-text-fill: #90a4ae; " +
                     "-fx-font-weight: bold; " +
                     "-fx-cursor: default;"
                 );
             } else {
                 int cost = costs[currentLevel];
-                buyButton.setText(String.format("升級: %d 🪙", cost));
+                buyButton.setText(String.format("升級: %d 金幣", cost));
                 
                 int playerCoins = SaveManager.getCoins();
                 if (playerCoins >= cost) {
@@ -301,7 +301,7 @@ public class ShopPanel extends VBox {
                     // 金幣不足
                     buyButton.setDisable(true);
                     buyButton.setStyle(
-                        "-fx-background-color: #5d4037; " + // 深可可
+                        "-fx-background-color: #e0e0e0; " + // 淺灰白，標準淺色金幣不足樣式
                         "-fx-text-fill: #9e9e9e; " +         // 灰色字體
                         "-fx-font-weight: bold; " +
                         "-fx-cursor: default;"

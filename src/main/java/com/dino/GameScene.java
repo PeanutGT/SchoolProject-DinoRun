@@ -627,7 +627,8 @@ public class GameScene {
                 } else {
                     coinY = groundY - 110;
                 }
-                Coin coin = new Coin(screenWidth, coinY);
+                double safeX = getSafeCoinX();
+                Coin coin = new Coin(safeX, coinY);
                 coinsList.add(coin);
                 root.getChildren().add(coin.getView());
             }
@@ -984,6 +985,28 @@ public class GameScene {
         ParallelTransition parallel = new ParallelTransition(translate, fade);
         parallel.setOnFinished(e -> root.getChildren().remove(label));
         parallel.play();
+    }
+
+    private double getSafeCoinX() {
+        double candidateX = screenWidth;
+        boolean safe = false;
+        int attempts = 0;
+        
+        while (!safe && attempts < 10) {
+            safe = true;
+            for (ObstacleSlot obs : obstacles) {
+                double obsX = obs.getX();
+                double dist = Math.abs(obsX - candidateX);
+                // 確保金幣與障礙物的左右距離至少大於 130 像素，保證玩家反應與操作空間
+                if (dist < 130.0) {
+                    candidateX = Math.max(candidateX, obsX) + 140.0;
+                    safe = false;
+                    break;
+                }
+            }
+            attempts++;
+        }
+        return candidateX;
     }
 
     public Pane getView() {

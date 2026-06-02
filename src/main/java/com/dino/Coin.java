@@ -49,6 +49,7 @@ public class Coin {
                     // 用於碰撞檢測的隱形圓形
                     outerCircle = new Circle(radius);
                     outerCircle.setFill(Color.TRANSPARENT);
+                    outerCircle.setStroke(Color.TRANSPARENT); // 設為完全透明，消除灰黑色圈框問題
                     coinArt.getChildren().add(outerCircle);
 
                     imageLoaded = true;

@@ -15,36 +15,15 @@ public class SaveManager {
 
     public static synchronized void load() {
         if (loaded) return;
-        File file = new File(FILE_PATH);
-        if (!file.exists()) {
-            coins = 100; // 預設進入遊戲有 100 金幣！
-            save();      // 立即存檔
-            loaded = true;
-            return;
-        }
-        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] parts = line.split("=");
-                if (parts.length == 2) {
-                    String key = parts[0].trim();
-                    try {
-                        int value = Integer.parseInt(parts[1].trim());
-                        switch (key) {
-                            case "coins": coins = value; break;
-                            case "livesLevel": livesLevel = value; break;
-                            case "magnetLevel": magnetLevel = value; break;
-                            case "multiplierLevel": multiplierLevel = value; break;
-                            case "extraJumpsLevel": extraJumpsLevel = value; break;
-                        }
-                    } catch (NumberFormatException nfe) {
-                        // 忽略格式錯誤的列
-                    }
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("讀取存檔失敗: " + e.getMessage());
-        }
+        
+        // 每次打開遊戲都重設為全新的初始存檔！
+        coins = 100;
+        livesLevel = 0;
+        magnetLevel = 0;
+        multiplierLevel = 0;
+        extraJumpsLevel = 0;
+        
+        save(); // 立即寫入檔案，覆蓋舊有存檔
         loaded = true;
     }
 
