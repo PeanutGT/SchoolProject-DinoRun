@@ -240,6 +240,7 @@ public class GameScene {
         });
         menuBtn.setOnAction(e -> {
             if (timer != null) timer.stop();
+            SoundManager.stopGameBgm();
             dinoMain.showMainMenu();
         });
 
@@ -448,6 +449,7 @@ public class GameScene {
     }
 
     private void gameOver() {
+        SoundManager.stopGameBgm();
         gameOver = true;
         if (score > sessionHighScore) {
             sessionHighScore = score;
@@ -603,6 +605,7 @@ public class GameScene {
                 if (waitingToStart) {
                     waitingToStart = false;
                     dino.hideHint();
+                    SoundManager.playGameBgm();
                     if (dino.jump()) {
                         SoundManager.playJump();
                     }
@@ -612,6 +615,7 @@ public class GameScene {
                     restartGame();
                     waitingToStart = false;
                     dino.hideHint();
+                    SoundManager.playGameBgm();
                     if (dino.jump()) {
                         SoundManager.playJump();
                     }
@@ -704,12 +708,14 @@ public class GameScene {
         isPaused = !isPaused;
         if (isPaused) {
             timer.stop();
+            SoundManager.stopGameBgm();
             pauseOverlay.setVisible(true);
         } else {
             pauseOverlay.setVisible(false);
             root.requestFocus(); // 將焦點還給遊戲容器
             lastFrameTime = 0; // 重置時間計算
             timer.start();
+            SoundManager.playGameBgm();
         }
     }
 

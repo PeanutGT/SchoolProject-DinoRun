@@ -15,12 +15,31 @@ public class SettingsPanel extends VBox {
         this.setAlignment(Pos.CENTER);
 
         // 音量調整
-        Label volLabel = new Label("主音量");
-        Slider volSlider = new Slider(0, 1, GameConfig.masterVolume);
-        volSlider.setMaxWidth(200);
-        volSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
-            GameConfig.masterVolume = newVal.doubleValue();
+        VBox volumeBox = new VBox(10);
+        volumeBox.setAlignment(Pos.CENTER);
+
+        Label masterVolLabel = new Label("主音量");
+        Slider masterVolSlider = new Slider(0, 1, GameConfig.masterVolume);
+        masterVolSlider.setMaxWidth(200);
+        masterVolSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+            SoundManager.setMasterVolume(newVal.doubleValue());
         });
+
+        Label sfxVolLabel = new Label("音效音量");
+        Slider sfxVolSlider = new Slider(0, 1, GameConfig.sfxVolume);
+        sfxVolSlider.setMaxWidth(200);
+        sfxVolSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+            SoundManager.setSfxVolume(newVal.doubleValue());
+        });
+
+        Label musicVolLabel = new Label("音樂音量");
+        Slider musicVolSlider = new Slider(0, 1, GameConfig.musicVolume);
+        musicVolSlider.setMaxWidth(200);
+        musicVolSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+            SoundManager.setMusicVolume(newVal.doubleValue());
+        });
+
+        volumeBox.getChildren().addAll(masterVolLabel, masterVolSlider, sfxVolLabel, sfxVolSlider, musicVolLabel, musicVolSlider);
 
         // 介面大小
         Label sizeLabel = new Label("介面大小 (需重啟遊戲)");
@@ -39,6 +58,6 @@ public class SettingsPanel extends VBox {
             GameConfig.devModeEnabled = newVal;
         });
 
-        this.getChildren().addAll(volLabel, volSlider, sizeLabel, sizeButtons, devModeCheck);
+        this.getChildren().addAll(volumeBox, sizeLabel, sizeButtons, devModeCheck);
     }
 }

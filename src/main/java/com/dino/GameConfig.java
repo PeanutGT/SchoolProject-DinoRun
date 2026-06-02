@@ -12,7 +12,9 @@ public class GameConfig {
     public static final double INITIAL_SPEED = 6 * 60;
     public static final double MAX_SPEED = 30 * 60;
     public static final double ACCELERATION = 0.002 * 3600;
-    public static double masterVolume = 0.5;      // 0.0 ~ 1.0
+    public static double masterVolume = 0.75;      // 0.0 ~ 1.0
+    public static double sfxVolume = 1.0;         // 0.0 ~ 1.0
+    public static double musicVolume = 0.5;       // 0.0 ~ 1.0
     public static double uiScale = 1.0;           // 1.0 = 800x400, 1.2 = 960x480
     public static String selectedCharacter = "dino";
     public static boolean devModeEnabled = false;
