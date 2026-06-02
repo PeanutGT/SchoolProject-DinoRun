@@ -144,18 +144,18 @@ public class ShopPanel extends VBox {
 
         // 8. 問號箱強化
         cardQuestionBox = new UpgradeCard(
-                "問號箱強化",
-                "Lv1:+10金幣 Lv2:+20金幣500分 Lv3:掉2道具",
+                "問號箱出現頻率",
+                "Lv1:每200分出現 Lv2:每150分出現 Lv3:每100分出現",
                 new int[] { 100, 200, 300 },
                 3,
                 () -> SaveManager.getQuestionBoxLevel(),
                 (lvl) -> SaveManager.setQuestionBoxLevel(lvl),
                 () -> {
                     int lvl = SaveManager.getQuestionBoxLevel();
-                    if (lvl == 1) return "目前: 額外10金幣";
-                    if (lvl == 2) return "目前: 20金幣+500分";
-                    if (lvl == 3) return "目前: 一次掉落2道具";
-                    return "目前狀態: 未啟用";
+                    if (lvl == 1) return "目前: 每 200 分出現";
+                    if (lvl == 2) return "目前: 每 150 分出現";
+                    if (lvl == 3) return "目前: 每 100 分出現";
+                    return "目前狀態: 未啟用 (預設每250分)";
                 });
 
         // 8. 角色解鎖扭蛋

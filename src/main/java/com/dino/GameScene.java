@@ -458,22 +458,7 @@ public class GameScene {
                 root.getChildren().remove(qb.getView());
                 it.remove();
                 
-                int qbLevel = SaveManager.getQuestionBoxLevel();
-                if (qbLevel >= 1) {
-                    int extraCoins = (qbLevel >= 2) ? 20 : 10;
-                    sessionCoins += extraCoins;
-                    SaveManager.addCoins(extraCoins);
-                    coinDisplay.update(sessionCoins);
-                    showFloatingText("+" + extraCoins + " 金幣", qb.getHitBoxBounds().getMinX(), qb.getHitBoxBounds().getMinY() - 20);
-                }
-                if (qbLevel >= 2) {
-                    distance += 500 * 50; // 500 points
-                }
-
                 giveRandomItem();
-                if (qbLevel >= 3) {
-                    giveRandomItem(); // Give a second item
-                }
             } else if (qb.isOffScreen()) {
                 root.getChildren().remove(qb.getView());
                 it.remove();
@@ -818,7 +803,17 @@ public class GameScene {
                 scoreDisplay.flashCurrentScore(score);
             }
 
-            if (score > 0 && score % GameConfig.QUESTION_BLOCK_INTERVAL == 0 && score != lastQuestionBlockScore) {
+            int qbInterval = GameConfig.QUESTION_BLOCK_INTERVAL;
+            int qbLevel = SaveManager.getQuestionBoxLevel();
+            if (qbLevel == 1) {
+                qbInterval = 200;
+            } else if (qbLevel == 2) {
+                qbInterval = 150;
+            } else if (qbLevel >= 3) {
+                qbInterval = 100;
+            }
+
+            if (score > 0 && score / qbInterval > lastQuestionBlockScore / qbInterval) {
                 lastQuestionBlockScore = score;
                 QuestionBlock qb = new QuestionBlock(screenWidth, groundY);
                 questionBlocks.add(qb);
