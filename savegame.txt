@@ -1,4 +1,4 @@
-coins=112
+coins=148
 livesLevel=0
 magnetLevel=0
 multiplierLevel=0
