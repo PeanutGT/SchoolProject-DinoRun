@@ -26,8 +26,8 @@ public class GameConfig {
     public static final long BOSS_RETREAT_GRACE_PERIOD_MS = 2000;
     public static final double BOSS_SLAM_JUMP_VELOCITY = -8 * 60;
     public static final double BOSS_CHARGE_VELOCITY = -6 * 60;
-    public static final double BOSS_BULLET_SPEED = 3 * 60;
-    public static final double BOSS_SHOCKWAVE_SPEED = 4 * 60;
+    public static final double BOSS_BULLET_SPEED = 5 * 60;
+    public static final double BOSS_SHOCKWAVE_SPEED = 6 * 60;
 
     // Boss 參數設定 (雙人合作)
     public static final int BOSS_TRIGGER_SCORE_COOP = 1000;
@@ -37,8 +37,8 @@ public class GameConfig {
     public static final long BOSS_RETREAT_GRACE_PERIOD_MS_COOP = 3000;
     public static final double BOSS_SLAM_JUMP_VELOCITY_COOP = -9 * 60;
     public static final double BOSS_CHARGE_VELOCITY_COOP = -7 * 60;
-    public static final double BOSS_BULLET_SPEED_COOP = 4 * 60;
-    public static final double BOSS_SHOCKWAVE_SPEED_COOP = 5 * 60;
+    public static final double BOSS_BULLET_SPEED_COOP = 6 * 60;
+    public static final double BOSS_SHOCKWAVE_SPEED_COOP = 7 * 60;
 
     // 技能與道具設定
     public static final double SWORD_ATTACK_RANGE = 600;

@@ -106,8 +106,8 @@ public class Dino {
 
         this.maxLives = 3 + SaveManager.getLivesBonus();
         this.lives = this.maxLives;
-        this.extraJumps = 0; // Starts at 0, only from enchanted book
-        this.doubleJumpUnlocked = SaveManager.getExtraJumpsLevel() > 0;
+        this.extraJumps = SaveManager.getExtraJumps(); // Starts with extra jumps from shop
+        this.doubleJumpUnlocked = false; // Disable permanent double jump
     }
 
     public void showHint(String text) {
@@ -547,8 +547,8 @@ public class Dino {
         crouching = false;
         jumpAnimating = false;
         downPressed = false;
-        extraJumps = 0;
-        doubleJumpUnlocked = SaveManager.getExtraJumpsLevel() > 0;
+        extraJumps = SaveManager.getExtraJumps(); // Reset to starting extra jumps
+        doubleJumpUnlocked = false; // Disable permanent double jump
         canDoubleJump = false;
         doubleJumping = false;
 

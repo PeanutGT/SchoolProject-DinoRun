@@ -84,10 +84,10 @@ public class NewBoss extends Boss {
 
         boolean isStage2 = hp <= 60;
         if (currentState == State.DASH) {
-            String imgName = isStage2 ? "knight2_run.png" : "knight_run.png";
+            String imgName = isStage2 ? "knight2_stand.png" : "knight_stand.png";
             visual.setImage(ResourceManager.getImage(imgName));
         } else {
-            String imgName = isStage2 ? "knight2_stand.png" : "knight_stand.png";
+            String imgName = isStage2 ? "knight2_run.png" : "knight_run.png";
             visual.setImage(ResourceManager.getImage(imgName));
         }
     }
@@ -127,7 +127,7 @@ public class NewBoss extends Boss {
                         cloneY = cloneTargetY;
                         cloneGroup.setLayoutX(cloneX);
                         cloneGroup.setLayoutY(cloneY);
-                        cloneVisual.setImage(ResourceManager.getImage("knight2_stand.png"));
+                        cloneVisual.setImage(ResourceManager.getImage("knight2_run.png"));
 
                         if (!root.getChildren().contains(cloneGroup)) {
                             // Add clone to screen under UI layers
@@ -168,7 +168,7 @@ public class NewBoss extends Boss {
                     if (elapsedDash >= CLONE_DELAY_SECS) {
                         if (!cloneDashing) {
                             cloneDashing = true;
-                            cloneVisual.setImage(ResourceManager.getImage("knight2_run.png"));
+                            cloneVisual.setImage(ResourceManager.getImage("knight2_stand.png"));
                         }
                         cloneX -= dashSpeed * dtSeconds;
                         cloneGroup.setLayoutX(cloneX);

@@ -533,7 +533,7 @@ public class GameScene {
                 boomerangGroup.setLayoutX(curX);
                 boomerangGroup.setLayoutY(curY);
             } else if (boomerangTime < duration) {
-                double pct = (boomerangTime - outward) / outward;
+                double pct = (boomerangTime - outward) / (duration - outward);
                 double outX = boomerangStartX + maxDist;
                 double outY = boomerangStartY;
                 // 追蹤恐龍的當前座標，優雅回收到手
