@@ -57,6 +57,9 @@ public class Dino {
     private boolean devInvincible = false;
     private long invincibleStartTime = 0;
     private final long invincibleDuration = 2000;
+    
+    private boolean isGhost = false;
+    private boolean hasGoldenApple = false;
 
     public Dino(double x) {
         this(x, GameConfig.GROUND_Y);
@@ -318,7 +321,7 @@ public class Dino {
     }
 
     public boolean hit(long activeGameTime) {
-        if (invincible || devInvincible) {
+        if (invincible || devInvincible || isGhost) {
             return false;
         }
 
@@ -346,6 +349,8 @@ public class Dino {
     }
 
     public boolean jump() {
+        if (isDead() || isGhost) return false;
+        
         if (onGround && !crouching) {
             velocityY = GameConfig.JUMP_VELOCITY;
             onGround = false;
@@ -456,6 +461,31 @@ public class Dino {
     }
 
     public boolean isDead() { return lives <= 0; }
+    
+    public boolean isGhost() { return isGhost; }
+    
+    public boolean getHasGoldenApple() { return hasGoldenApple; }
+    public void setHasGoldenApple(boolean b) { this.hasGoldenApple = b; }
+
+    public void becomeGhost() {
+        isGhost = true;
+        imageView.setFitWidth(standWidth);
+        imageView.setFitHeight(standHeight);
+        imageView.setImage(deadImage);
+        group.setOpacity(0.5);
+        // Slightly shift Y to visually indicate floating, we'll maintain this in updateJump
+        group.setLayoutY(groundY - 120);
+        hitBox.setVisible(false); // Can hide hitBox or shrink it
+    }
+    
+    public void revive(long activeGameTime) {
+        isGhost = false;
+        lives = 1;
+        invincible = true;
+        invincibleStartTime = activeGameTime;
+        group.setOpacity(1.0);
+        standUp();
+    }
 
     public void die() {
         imageView.setFitWidth(standWidth);
@@ -469,6 +499,8 @@ public class Dino {
         this.lives = this.maxLives;
         invincible = false;
         devInvincible = false;
+        isGhost = false;
+        hasGoldenApple = false;
         velocityY = 0;
         onGround = true;
         crouching = false;
@@ -495,6 +527,12 @@ public class Dino {
     }
 
     public void update(long activeGameTime, double dtSeconds) {
+        if (isGhost) {
+            updateJump(dtSeconds);
+            // Ignore animation updates while ghost
+            return;
+        }
+        
         updateJump(dtSeconds);
         updateJumpAnimation();
         if (crouching) {
@@ -506,6 +544,12 @@ public class Dino {
     }
 
     private void updateJump(double dtSeconds) {
+        if (isGhost) {
+            group.setLayoutY(groundY - 120);
+            velocityY = 0;
+            return;
+        }
+
         if (!onGround) {
             group.setLayoutY(group.getLayoutY() + velocityY * dtSeconds);
 

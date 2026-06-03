@@ -1,0 +1,1 @@
+package com.dino; import javafx.scene.input.KeyCode; public class TestKeyLocation { public static void main(String[] args) { for (KeyCode c : KeyCode.values()) { if (c.name().contains("SHIFT")) System.out.println(c.name()); } } }

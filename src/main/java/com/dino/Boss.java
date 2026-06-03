@@ -21,7 +21,7 @@ public class Boss {
     private Image[] walkFrames;
     private Rectangle hitBox;
 
-    private int hp = GameConfig.BOSS_HP;
+    private int hp;
     private long startTime;
     private long stateTimer;
     private State currentState = State.IDLE;
@@ -40,8 +40,20 @@ public class Boss {
 
     private double velocityY = 0;
     private int walkFrameCounter = 0;
+    
+    private boolean isCoop;
+    private double slamJumpVelocity;
+    private double bulletSpeed;
+    private double shockwaveSpeed;
+    private long survivalTimeMs;
 
-    public Boss(Pane root, long activeGameTime) {
+    public Boss(Pane root, long activeGameTime, boolean isCoop) {
+        this.isCoop = isCoop;
+        this.hp = isCoop ? GameConfig.BOSS_HP_COOP : GameConfig.BOSS_HP;
+        this.slamJumpVelocity = isCoop ? GameConfig.BOSS_SLAM_JUMP_VELOCITY_COOP : GameConfig.BOSS_SLAM_JUMP_VELOCITY;
+        this.bulletSpeed = isCoop ? GameConfig.BOSS_BULLET_SPEED_COOP : GameConfig.BOSS_BULLET_SPEED;
+        this.shockwaveSpeed = isCoop ? GameConfig.BOSS_SHOCKWAVE_SPEED_COOP : GameConfig.BOSS_SHOCKWAVE_SPEED;
+        this.survivalTimeMs = isCoop ? GameConfig.BOSS_SURVIVAL_TIME_MS_COOP : GameConfig.BOSS_SURVIVAL_TIME_MS;
         this.root = root;
         this.x = startX;
         this.y = startY;
@@ -106,7 +118,7 @@ public class Boss {
                     currentState = State.SLAM;
                     stateTimer = now;
                     visual.setOpacity(1.0);
-                    velocityY = GameConfig.BOSS_SLAM_JUMP_VELOCITY; // 向上跳躍
+                    velocityY = slamJumpVelocity; // 往上跳躍躍
                 }
                 break;
             case SLAM:
@@ -188,7 +200,7 @@ public class Boss {
                 bulletY,
                 48,
                 48,
-                GameConfig.BOSS_BULLET_SPEED,
+                bulletSpeed,
                 new String[] { "boss_fireball_1.png", "boss_fireball_2.png", "boss_fireball_3.png",
                         "boss_fireball_4.png" },
                 false);
@@ -203,7 +215,7 @@ public class Boss {
                 groundY - 30,
                 64,
                 24,
-                GameConfig.BOSS_SHOCKWAVE_SPEED,
+                shockwaveSpeed,
                 new String[] { "boss_fireball_1.png", "boss_fireball_2.png" },
                 false);
         projectiles.add(p);
@@ -239,7 +251,7 @@ public class Boss {
     }
 
     public boolean isDefeated(long activeGameTime) {
-        return hp <= 0 || (activeGameTime - startTime >= GameConfig.BOSS_SURVIVAL_TIME_MS); // 存活滿指定時間或HP歸零即算擊退
+        return hp <= 0 || (activeGameTime - startTime >= survivalTimeMs); // 存活滿指定時間或HP歸零則撤退
     }
 
     public void takeDamage(int amount) {

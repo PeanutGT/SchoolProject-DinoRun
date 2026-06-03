@@ -20,7 +20,8 @@ public class CharacterSelectScene {
 
     public enum Mode {
         SINGLE,
-        VERSUS
+        VERSUS,
+        COOP
     }
 
     private static final double BASE_WIDTH = GameConfig.SCREEN_WIDTH;
@@ -39,6 +40,8 @@ public class CharacterSelectScene {
     private int selectedIndex = 0;
     private int selectingPlayer = 1;
     private String playerOneCharacter = CHARACTER_IDS[0];
+    private String playerTwoCharacter = CHARACTER_IDS[0];
+    private boolean isEnterPressed = false;
 
     public CharacterSelectScene(DinoMain dinoMain, Mode mode) {
         this.dinoMain = dinoMain;
@@ -53,16 +56,19 @@ public class CharacterSelectScene {
         layout.setPrefSize(BASE_WIDTH, BASE_HEIGHT);
         layout.setMaxSize(BASE_WIDTH, BASE_HEIGHT);
 
-        titleLabel = new Label(mode == Mode.SINGLE ? "選擇角色" : "雙人對戰選角");
-        titleLabel.setFont(Font.font("Microsoft JhengHei", FontWeight.BOLD, 34));
+        titleLabel = new Label(mode == Mode.SINGLE ? "選擇角色" : (mode == Mode.VERSUS ? "雙人對戰模式" : "雙人合作模式"));
+        titleLabel.setFont(Font.font("Courier New", 32));
+        titleLabel.setTextFill(Color.BLACK);
 
         turnLabel = new Label();
-        turnLabel.setFont(Font.font(18));
+        turnLabel.setFont(Font.font("Courier New", 24));
+        turnLabel.setTextFill(Color.RED);
+        turnLabel.setText(mode == Mode.SINGLE ? "PLAYER 1" : "PLAYER " + selectingPlayer);
 
         cards = new HBox(28);
         cards.setAlignment(Pos.CENTER);
 
-        Label helpLabel = new Label("方向鍵選擇    Enter 確認    Esc 返回    [ ? = 尚未解鎖，請至商店購買 ]");
+        Label helpLabel = new Label("方向鍵/WASD 選擇    Enter 確認    Esc 返回    [ ? = 尚未解鎖，請至商店購買 ]");
         helpLabel.setFont(Font.font(13));
         helpLabel.setTextFill(Color.rgb(120, 80, 50));
 
@@ -74,8 +80,7 @@ public class CharacterSelectScene {
 
     private void updateView() {
         cards.getChildren().clear();
-        turnLabel.setText(mode == Mode.SINGLE ? "PLAYER 1" : "PLAYER " + selectingPlayer);
-
+        
         for (int i = 0; i < CHARACTER_IDS.length; i++) {
             cards.getChildren().add(createCard(i));
         }
@@ -91,7 +96,6 @@ public class CharacterSelectScene {
 
         Rectangle frame = new Rectangle(126, 94);
         if (!unlocked) {
-            // 鎖定狀態：深暗框、半透明灰色背景
             frame.setFill(isSelected ? Color.rgb(60, 40, 30) : Color.rgb(40, 40, 40));
             frame.setStroke(isSelected ? Color.web("#FFD54F") : Color.rgb(100, 100, 100));
             frame.setStrokeWidth(isSelected ? 4 : 2);
@@ -105,7 +109,6 @@ public class CharacterSelectScene {
         previewPane.setPrefSize(126, 94);
 
         if (unlocked) {
-            // 已解鎖：正常顯示角色頭像
             ImageView preview = new ImageView(ResourceManager.getImage(PREVIEW_IMAGES[index]));
             preview.setSmooth(false);
             preview.setFitWidth("sonic".equals(CHARACTER_IDS[index]) ? 58 : 52);
@@ -114,7 +117,6 @@ public class CharacterSelectScene {
             preview.setLayoutY(28);
             previewPane.getChildren().add(preview);
         } else {
-            // 未解鎖：顯示大問號
             Label qMark = new Label("?");
             qMark.setFont(Font.font("Arial", FontWeight.BOLD, 48));
             qMark.setTextFill(isSelected ? Color.web("#FFD54F") : Color.rgb(150, 150, 150));
@@ -142,12 +144,21 @@ public class CharacterSelectScene {
                 return;
             }
 
-            if (e.getCode() == KeyCode.LEFT || e.getCode() == KeyCode.UP) {
+            if (e.getCode() == KeyCode.LEFT || e.getCode() == KeyCode.UP || e.getCode() == KeyCode.A || e.getCode() == KeyCode.W) {
                 moveSelection(-1);
-            } else if (e.getCode() == KeyCode.RIGHT || e.getCode() == KeyCode.DOWN) {
+            } else if (e.getCode() == KeyCode.RIGHT || e.getCode() == KeyCode.DOWN || e.getCode() == KeyCode.D || e.getCode() == KeyCode.S) {
                 moveSelection(1);
             } else if (e.getCode() == KeyCode.ENTER) {
-                confirmSelection();
+                if (!isEnterPressed) {
+                    isEnterPressed = true;
+                    confirmSelection();
+                }
+            }
+        });
+        
+        scene.setOnKeyReleased(e -> {
+            if (e.getCode() == KeyCode.ENTER) {
+                isEnterPressed = false;
             }
         });
     }
@@ -158,13 +169,12 @@ public class CharacterSelectScene {
     }
 
     private void confirmSelection() {
-        String selectedCharacter = CHARACTER_IDS[selectedIndex];
+        String character = CHARACTER_IDS[selectedIndex];
 
-        // 若未解鎖，拒絕選取並顯示警告
-        if (!SaveManager.isCharacterUnlocked(selectedCharacter)) {
+        if (!SaveManager.isCharacterUnlocked(character)) {
             SoundManager.playHit();
-            String originalTitle = mode == Mode.SINGLE ? "選擇角色" : "雙人對戰選角";
-            titleLabel.setText("⚠ 此角色尚未解鎖！請至商店花費 100 金幣購買！");
+            String originalTitle = titleLabel.getText();
+            titleLabel.setText("⚠ 此角色尚未解鎖！");
             titleLabel.setTextFill(Color.RED);
             PauseTransition pause = new PauseTransition(Duration.seconds(2));
             pause.setOnFinished(ev -> {
@@ -176,17 +186,22 @@ public class CharacterSelectScene {
         }
 
         if (mode == Mode.SINGLE) {
-            dinoMain.startSinglePlayerGame(selectedCharacter);
-            return;
-        }
-
-        if (selectingPlayer == 1) {
-            playerOneCharacter = selectedCharacter;
-            selectingPlayer = 2;
-            selectedIndex = 0;
-            updateView();
+            GameConfig.selectedCharacter = character;
+            dinoMain.startSinglePlayerGame(character);
         } else {
-            dinoMain.startVersusGame(playerOneCharacter, selectedCharacter);
+            if (selectingPlayer == 1) {
+                playerOneCharacter = character;
+                selectingPlayer = 2;
+                turnLabel.setText("PLAYER 2");
+                turnLabel.setTextFill(Color.BLUE);
+            } else {
+                playerTwoCharacter = character;
+                if (mode == Mode.VERSUS) {
+                    dinoMain.startVersusGame(playerOneCharacter, playerTwoCharacter);
+                } else {
+                    dinoMain.startCoopGame(playerOneCharacter, playerTwoCharacter);
+                }
+            }
         }
     }
 

@@ -69,7 +69,7 @@ public class GameScene {
 
     private boolean bossPhase = false;
     private boolean bossIncoming = false;
-    private boolean bossHasAppeared = false;
+    private int nextBossScore = GameConfig.BOSS_TRIGGER_SCORE;
     private Boss boss = null;
     private Rectangle screenFlash;
 
@@ -657,7 +657,7 @@ public class GameScene {
         scoreDisplay.update(score, sessionHighScore);
         dino.die();
 
-        if (LeaderboardManager.isHighScore(score)) {
+        if (LeaderboardManager.isHighScore(score, false)) {
             Platform.runLater(() -> {
                 TextInputDialog dialog = new TextInputDialog("Player");
                 dialog.setTitle("排行榜");
@@ -669,7 +669,7 @@ public class GameScene {
                     String cleanName = name.replace(",", "").trim();
                     if (cleanName.isEmpty())
                         cleanName = "Unknown";
-                    LeaderboardManager.addScore(cleanName, score, currentCharacter);
+                    LeaderboardManager.addScore(cleanName, score, currentCharacter, null, false);
                 });
 
                 gameOverImage.setVisible(true);
@@ -722,7 +722,7 @@ public class GameScene {
     private void triggerBossPhase() {
         bossIncoming = false;
         bossPhase = true;
-        boss = new Boss(root, activeGameTime);
+        boss = new Boss(root, activeGameTime, false);
 
         screenFlash.setFill(Color.rgb(255, 0, 0, 0.5));
         screenFlash.setVisible(true);
@@ -848,9 +848,9 @@ public class GameScene {
                 }
             }
 
-            if (!bossHasAppeared && score >= GameConfig.BOSS_TRIGGER_SCORE) {
+            if (score >= nextBossScore) {
                 bossIncoming = true;
-                bossHasAppeared = true;
+                nextBossScore += GameConfig.BOSS_INTERVAL_SCORE;
             }
         }
         scoreDisplay.update(score, sessionHighScore);
@@ -1076,7 +1076,7 @@ public class GameScene {
         }
         bossPhase = false;
         bossIncoming = false;
-        bossHasAppeared = false;
+        nextBossScore = GameConfig.BOSS_TRIGGER_SCORE;
         inBossGracePeriod = false;
 
         lastQuestionBlockScore = 0;

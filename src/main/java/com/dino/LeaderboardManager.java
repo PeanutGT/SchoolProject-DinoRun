@@ -5,17 +5,20 @@ import java.util.*;
 
 public class LeaderboardManager {
     private static final String FILE_PATH = "leaderboard.txt";
+    private static final String FILE_PATH_COOP = "leaderboard_coop.txt";
     private static final int MAX_SCORES = 50;
 
     public static class ScoreEntry implements Comparable<ScoreEntry> {
         public String name;
         public int score;
         public String characterType;
+        public String characterType2; // null for single player
 
-        public ScoreEntry(String name, int score, String characterType) {
+        public ScoreEntry(String name, int score, String characterType, String characterType2) {
             this.name = name;
             this.score = score;
             this.characterType = characterType;
+            this.characterType2 = characterType2;
         }
 
         @Override
@@ -24,9 +27,13 @@ public class LeaderboardManager {
         }
     }
 
-    public static List<ScoreEntry> loadTopScores() {
+    private static String getFilePath(boolean isCoop) {
+        return isCoop ? FILE_PATH_COOP : FILE_PATH;
+    }
+
+    public static List<ScoreEntry> loadTopScores(boolean isCoop) {
         List<ScoreEntry> scores = new ArrayList<>();
-        File file = new File(FILE_PATH);
+        File file = new File(getFilePath(isCoop));
         if (!file.exists()) {
             return scores;
         }
@@ -35,11 +42,17 @@ public class LeaderboardManager {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split(",");
-                if (parts.length >= 3) {
-                    scores.add(new ScoreEntry(parts[0], Integer.parseInt(parts[1]), parts[2]));
-                } else if (parts.length == 2) {
-                    // 相容舊紀錄
-                    scores.add(new ScoreEntry(parts[0], Integer.parseInt(parts[1]), "dino"));
+                if (isCoop) {
+                    if (parts.length >= 4) {
+                        scores.add(new ScoreEntry(parts[0], Integer.parseInt(parts[1]), parts[2], parts[3]));
+                    }
+                } else {
+                    if (parts.length >= 3) {
+                        scores.add(new ScoreEntry(parts[0], Integer.parseInt(parts[1]), parts[2], null));
+                    } else if (parts.length == 2) {
+                        // 相容舊版資料
+                        scores.add(new ScoreEntry(parts[0], Integer.parseInt(parts[1]), "dino", null));
+                    }
                 }
             }
         } catch (Exception e) {
@@ -53,26 +66,30 @@ public class LeaderboardManager {
         return scores;
     }
 
-    public static boolean isHighScore(int score) {
+    public static boolean isHighScore(int score, boolean isCoop) {
         if (score <= 0) return false;
-        List<ScoreEntry> scores = loadTopScores();
+        List<ScoreEntry> scores = loadTopScores(isCoop);
         if (scores.size() < MAX_SCORES) {
             return true;
         }
         return score > scores.get(scores.size() - 1).score;
     }
 
-    public static void addScore(String name, int score, String characterType) {
-        List<ScoreEntry> scores = loadTopScores();
-        scores.add(new ScoreEntry(name, score, characterType));
+    public static void addScore(String name, int score, String characterType, String characterType2, boolean isCoop) {
+        List<ScoreEntry> scores = loadTopScores(isCoop);
+        scores.add(new ScoreEntry(name, score, characterType, characterType2));
         Collections.sort(scores);
         if (scores.size() > MAX_SCORES) {
             scores = scores.subList(0, MAX_SCORES);
         }
 
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILE_PATH))) {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(getFilePath(isCoop)))) {
             for (ScoreEntry entry : scores) {
-                bw.write(entry.name + "," + entry.score + "," + entry.characterType);
+                if (isCoop) {
+                    bw.write(entry.name + "," + entry.score + "," + entry.characterType + "," + entry.characterType2);
+                } else {
+                    bw.write(entry.name + "," + entry.score + "," + entry.characterType);
+                }
                 bw.newLine();
             }
         } catch (Exception e) {

@@ -84,8 +84,16 @@ public class DinoMain extends Application {
     }
 
     public void startCoopGame() {
-        System.out.println("雙人合作模式即將推出...");
-        // TODO: 預留給雙人合作模式的實作
+        showCharacterSelect(CharacterSelectScene.Mode.COOP);
+    }
+
+    public void startCoopGame(String playerOneCharacter, String playerTwoCharacter) {
+        CoopGameScene coopScene = new CoopGameScene(this, playerOneCharacter, playerTwoCharacter);
+        setScenePreservingWindowMode(coopScene.getView());
+
+        coopScene.setKeyControl(stage.getScene());
+
+        Platform.runLater(() -> coopScene.getView().requestFocus());
     }
 
     public void startVersusGame() {

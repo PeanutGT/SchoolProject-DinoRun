@@ -58,10 +58,15 @@ public class SoundManager {
     private static AudioClip loadSound(String fileName) {
         try {
             String path = "/com/dino/assets/" + fileName;
-            String url = SoundManager.class.getResource(path).toExternalForm();
+            java.net.URL resourceUrl = SoundManager.class.getResource(path);
+            if (resourceUrl == null) {
+                System.err.println("找不到音效資源: " + fileName);
+                return null;
+            }
+            String url = resourceUrl.toExternalForm();
             return new AudioClip(url);
-        } catch (Exception e) {
-            System.err.println("找不到音效資源: " + fileName);
+        } catch (Throwable t) {
+            System.err.println("無法載入音效資源或底層多媒體庫缺失: " + fileName + " (" + t.getMessage() + ")");
             return null;
         }
     }
@@ -69,11 +74,16 @@ public class SoundManager {
     private static MediaPlayer loadMediaPlayer(String fileName) {
         try {
             String path = "/com/dino/assets/" + fileName;
-            String url = SoundManager.class.getResource(path).toExternalForm();
+            java.net.URL resourceUrl = SoundManager.class.getResource(path);
+            if (resourceUrl == null) {
+                System.err.println("找不到音樂資源: " + fileName);
+                return null;
+            }
+            String url = resourceUrl.toExternalForm();
             Media media = new Media(url);
             return new MediaPlayer(media);
-        } catch (Exception e) {
-            System.err.println("找不到音樂資源: " + fileName);
+        } catch (Throwable t) {
+            System.err.println("無法載入音樂資源或底層多媒體庫缺失: " + fileName + " (" + t.getMessage() + ")");
             return null;
         }
     }
@@ -158,9 +168,8 @@ public class SoundManager {
             });
             
             currentGameBgm.play();
-        } catch (Exception e) {
-            System.err.println("無法播放遊戲背景音樂: " + nextBgm);
-            e.printStackTrace();
+        } catch (Throwable t) {
+            System.err.println("無法播放遊戲背景音樂或多媒體庫缺失: " + nextBgm + " (" + t.getMessage() + ")");
         }
     }
 

@@ -81,23 +81,72 @@ public class MainMenuController {
         }
     }
 
+    private VBox leaderboardContentContainer;
+    private boolean isCoopLeaderboard = false;
+
     @FXML
     private void showLeaderboard() {
         VBox leaderboardPanel = new VBox(15);
         leaderboardPanel.setAlignment(Pos.CENTER);
-        leaderboardPanel.setMaxSize(500, 480);
+        leaderboardPanel.setMaxSize(500, 520);
         leaderboardPanel.setStyle("-fx-background-color: #3e2723; -fx-border-color: #d7ccc8; -fx-border-width: 4; -fx-border-style: solid; -fx-padding: 15;");
 
-        Label title = new Label("★ TOP DINOS ★");
+        Label title = new Label("🏆 TOP DINOS 🏆");
         title.setStyle("-fx-text-fill: #ffd54f; -fx-font-family: 'Courier New'; -fx-font-size: 28; -fx-font-weight: bold;");
 
-        List<LeaderboardManager.ScoreEntry> scores = LeaderboardManager.loadTopScores();
+        HBox tabBox = new HBox(10);
+        tabBox.setAlignment(Pos.CENTER);
+        Button singleBtn = new Button("單人榜");
+        Button coopBtn = new Button("雙人榜");
+        
+        String activeStyle = "-fx-background-color: #ffca28; -fx-text-fill: #3e2723; -fx-font-family: 'Courier New'; -fx-font-weight: bold;";
+        String inactiveStyle = "-fx-background-color: #5d4037; -fx-text-fill: white; -fx-font-family: 'Courier New'; -fx-font-weight: bold;";
+        
+        singleBtn.setStyle(activeStyle);
+        coopBtn.setStyle(inactiveStyle);
+
+        leaderboardContentContainer = new VBox(10);
+        leaderboardContentContainer.setAlignment(Pos.CENTER);
+
+        singleBtn.setOnAction(e -> {
+            isCoopLeaderboard = false;
+            singleBtn.setStyle(activeStyle);
+            coopBtn.setStyle(inactiveStyle);
+            updateLeaderboardContent();
+        });
+
+        coopBtn.setOnAction(e -> {
+            isCoopLeaderboard = true;
+            singleBtn.setStyle(inactiveStyle);
+            coopBtn.setStyle(activeStyle);
+            updateLeaderboardContent();
+        });
+
+        tabBox.getChildren().addAll(singleBtn, coopBtn);
+        
+        leaderboardPanel.getChildren().addAll(title, tabBox, leaderboardContentContainer);
+
+        updateLeaderboardContent();
+
+        Button closeBtn = new Button("[ 返回主選單 ]");
+        closeBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: white; -fx-font-family: 'Courier New'; -fx-font-size: 18; -fx-font-weight: bold; -fx-cursor: hand;");
+        closeBtn.setOnMouseEntered(e -> closeBtn.setStyle("-fx-background-color: #5d4037; -fx-text-fill: #ffca28; -fx-font-family: 'Courier New'; -fx-font-size: 18; -fx-font-weight: bold; -fx-cursor: hand;"));
+        closeBtn.setOnMouseExited(e -> closeBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: white; -fx-font-family: 'Courier New'; -fx-font-size: 18; -fx-font-weight: bold; -fx-cursor: hand;"));
+        closeBtn.setOnAction(e -> rootBox.getChildren().remove(leaderboardPanel));
+
+        leaderboardPanel.getChildren().add(closeBtn);
+        rootBox.getChildren().add(leaderboardPanel);
+    }
+    
+    private void updateLeaderboardContent() {
+        leaderboardContentContainer.getChildren().clear();
+        List<LeaderboardManager.ScoreEntry> scores = LeaderboardManager.loadTopScores(isCoopLeaderboard);
+        
         if (scores.isEmpty()) {
-            Label emptyLabel = new Label("目前還沒有紀錄喔！");
+            Label emptyLabel = new Label("尚無任何分數紀錄！");
             emptyLabel.setStyle("-fx-text-fill: white; -fx-font-family: 'Courier New'; -fx-font-size: 16;");
-            leaderboardPanel.getChildren().addAll(title, emptyLabel);
+            leaderboardContentContainer.getChildren().add(emptyLabel);
         } else {
-            // 頒獎台區塊 (Top 3)
             HBox podiumBox = new HBox(15);
             podiumBox.setAlignment(Pos.BOTTOM_CENTER);
             
@@ -109,9 +158,8 @@ public class MainMenuController {
             if (firstPlace != null) podiumBox.getChildren().add(firstPlace);
             if (thirdPlace != null) podiumBox.getChildren().add(thirdPlace);
             
-            leaderboardPanel.getChildren().addAll(title, podiumBox);
+            leaderboardContentContainer.getChildren().add(podiumBox);
 
-            // 滾動列表區塊 (Top 4-50)
             if (scores.size() > 3) {
                 VBox listVBox = new VBox(8);
                 listVBox.setAlignment(Pos.TOP_CENTER);
@@ -121,15 +169,27 @@ public class MainMenuController {
                     HBox row = new HBox(15);
                     row.setAlignment(Pos.CENTER_LEFT);
                     
-                    ImageView imgView = new ImageView(getCharacterImage(entry.characterType));
-                    imgView.setFitWidth(24);
-                    imgView.setPreserveRatio(true);
-                    imgView.setSmooth(false);
+                    HBox charactersBox = new HBox(5);
+                    charactersBox.setAlignment(Pos.CENTER);
+                    
+                    ImageView imgView1 = new ImageView(getCharacterImage(entry.characterType));
+                    imgView1.setFitWidth(24);
+                    imgView1.setPreserveRatio(true);
+                    imgView1.setSmooth(false);
+                    charactersBox.getChildren().add(imgView1);
+                    
+                    if (isCoopLeaderboard && entry.characterType2 != null) {
+                        ImageView imgView2 = new ImageView(getCharacterImage(entry.characterType2));
+                        imgView2.setFitWidth(24);
+                        imgView2.setPreserveRatio(true);
+                        imgView2.setSmooth(false);
+                        charactersBox.getChildren().add(imgView2);
+                    }
                     
                     Label infoLabel = new Label(String.format("%2d. %-15s %6d", (i + 1), entry.name, entry.score));
                     infoLabel.setStyle("-fx-text-fill: white; -fx-font-family: 'Courier New'; -fx-font-size: 16; -fx-font-weight: bold;");
                     
-                    row.getChildren().addAll(imgView, infoLabel);
+                    row.getChildren().addAll(charactersBox, infoLabel);
                     listVBox.getChildren().add(row);
                 }
                 
@@ -138,21 +198,12 @@ public class MainMenuController {
                 scrollPane.setMaxWidth(400);
                 scrollPane.setStyle("-fx-background: #4e342e; -fx-background-color: transparent; -fx-padding: 10; -fx-border-color: #d7ccc8; -fx-border-width: 2;");
                 scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-                scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER); // 隱藏滾動條
+                scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
                 scrollPane.setFitToWidth(true);
                 
-                leaderboardPanel.getChildren().add(scrollPane);
+                leaderboardContentContainer.getChildren().add(scrollPane);
             }
         }
-
-        Button closeBtn = new Button("[ 回主選單 ]");
-        closeBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: white; -fx-font-family: 'Courier New'; -fx-font-size: 18; -fx-font-weight: bold; -fx-cursor: hand;");
-        closeBtn.setOnMouseEntered(e -> closeBtn.setStyle("-fx-background-color: #5d4037; -fx-text-fill: #ffca28; -fx-font-family: 'Courier New'; -fx-font-size: 18; -fx-font-weight: bold; -fx-cursor: hand;"));
-        closeBtn.setOnMouseExited(e -> closeBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: white; -fx-font-family: 'Courier New'; -fx-font-size: 18; -fx-font-weight: bold; -fx-cursor: hand;"));
-        closeBtn.setOnAction(e -> rootBox.getChildren().remove(leaderboardPanel));
-
-        leaderboardPanel.getChildren().add(closeBtn);
-        rootBox.getChildren().add(leaderboardPanel);
     }
     
     private VBox createPodiumSpot(List<LeaderboardManager.ScoreEntry> scores, int index, String color, String titleText, double baseHeight) {
@@ -165,10 +216,22 @@ public class MainMenuController {
         Label titleLabel = new Label(titleText);
         titleLabel.setStyle("-fx-text-fill: " + color + "; -fx-font-family: 'Courier New'; -fx-font-size: 18; -fx-font-weight: bold;");
         
-        ImageView imgView = new ImageView(getCharacterImage(entry.characterType));
-        imgView.setFitWidth(index == 0 ? 48 : 36);
-        imgView.setPreserveRatio(true);
-        imgView.setSmooth(false);
+        HBox charactersBox = new HBox(5);
+        charactersBox.setAlignment(Pos.BOTTOM_CENTER);
+        
+        ImageView imgView1 = new ImageView(getCharacterImage(entry.characterType));
+        imgView1.setFitWidth(index == 0 ? 48 : 36);
+        imgView1.setPreserveRatio(true);
+        imgView1.setSmooth(false);
+        charactersBox.getChildren().add(imgView1);
+        
+        if (isCoopLeaderboard && entry.characterType2 != null) {
+            ImageView imgView2 = new ImageView(getCharacterImage(entry.characterType2));
+            imgView2.setFitWidth(index == 0 ? 48 : 36);
+            imgView2.setPreserveRatio(true);
+            imgView2.setSmooth(false);
+            charactersBox.getChildren().add(imgView2);
+        }
         
         Label nameLabel = new Label(entry.name);
         nameLabel.setStyle("-fx-text-fill: white; -fx-font-family: 'Courier New'; -fx-font-size: 14; -fx-font-weight: bold;");
@@ -178,11 +241,11 @@ public class MainMenuController {
         
         VBox base = new VBox();
         base.setAlignment(Pos.CENTER);
-        base.setPrefSize(90, baseHeight);
+        base.setPrefSize(100, baseHeight);
         base.setStyle("-fx-background-color: #5d4037; -fx-border-color: #8d6e63; -fx-border-width: 2;");
         base.getChildren().addAll(nameLabel, scoreLabel);
         
-        spot.getChildren().addAll(titleLabel, imgView, base);
+        spot.getChildren().addAll(titleLabel, charactersBox, base);
         return spot;
     }
 

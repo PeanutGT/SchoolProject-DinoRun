@@ -32,26 +32,60 @@ public class SaveManager {
     public static synchronized void load() {
         if (loaded) return;
         
-        // 每次打開遊戲都重設為全新的初始存檔！
-        coins = 0;
-        livesLevel = 0;
-        magnetLevel = 0;
-        multiplierLevel = 0;
-        extraJumpsLevel = 0;
-        resurrectionCount = 0;
-        regenLevel = 0;
-        moreCoinsLevel = 0;
-        questionBoxLevel = 0;
+        File file = new File(FILE_PATH);
+        if (!file.exists()) {
+            // 如果存檔不存在，就先給初始值並存檔
+            coins = 0;
+            livesLevel = 0;
+            magnetLevel = 0;
+            multiplierLevel = 0;
+            extraJumpsLevel = 0;
+            resurrectionCount = 0;
+            regenLevel = 0;
+            moreCoinsLevel = 0;
+            questionBoxLevel = 0;
 
-        // 初始時所有進階角色皆鎖定
-        marioUnlocked = false;
-        luigiUnlocked = false;
-        kirbyUnlocked = false;
-        lucarioUnlocked = false;
-        sonicUnlocked = false;
-        steveUnlocked = false;
-        
-        save(); // 立即寫入檔案，覆蓋舊有存檔
+            marioUnlocked = false;
+            luigiUnlocked = false;
+            kirbyUnlocked = false;
+            lucarioUnlocked = false;
+            sonicUnlocked = false;
+            steveUnlocked = false;
+            save();
+            loaded = true;
+            return;
+        }
+
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split("=");
+                if (parts.length < 2) continue;
+                String key = parts[0].trim();
+                String val = parts[1].trim();
+
+                switch (key) {
+                    case "coins": coins = Integer.parseInt(val); break;
+                    case "livesLevel": livesLevel = Integer.parseInt(val); break;
+                    case "magnetLevel": magnetLevel = Integer.parseInt(val); break;
+                    case "multiplierLevel": multiplierLevel = Integer.parseInt(val); break;
+                    case "extraJumpsLevel": extraJumpsLevel = Integer.parseInt(val); break;
+                    case "resurrectionCount": resurrectionCount = Integer.parseInt(val); break;
+                    case "regenLevel": regenLevel = Integer.parseInt(val); break;
+                    case "moreCoinsLevel": moreCoinsLevel = Integer.parseInt(val); break;
+                    case "questionBoxLevel": questionBoxLevel = Integer.parseInt(val); break;
+                    case "marioUnlocked": marioUnlocked = Boolean.parseBoolean(val); break;
+                    case "luigiUnlocked": luigiUnlocked = Boolean.parseBoolean(val); break;
+                    case "kirbyUnlocked": kirbyUnlocked = Boolean.parseBoolean(val); break;
+                    case "lucarioUnlocked": lucarioUnlocked = Boolean.parseBoolean(val); break;
+                    case "sonicUnlocked": sonicUnlocked = Boolean.parseBoolean(val); break;
+                    case "steveUnlocked": steveUnlocked = Boolean.parseBoolean(val); break;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("讀取存檔失敗: " + e.getMessage());
+        }
+
         loaded = true;
     }
 
