@@ -309,8 +309,8 @@ public class VersusGameScene {
             rightMostX = Math.max(rightMostX, other.getX());
         }
 
-        double minDistance = 240 + speed * (26.0 / 60.0);
-        double randomDistance = Math.random() * 260;
+        double minDistance = GameConfig.OBSTACLE_MIN_DISTANCE_BASE_VERSUS + speed * GameConfig.OBSTACLE_DISTANCE_SPEED_RATIO_VERSUS;
+        double randomDistance = Math.random() * GameConfig.OBSTACLE_MAX_RANDOM_DISTANCE_VERSUS;
         obstacle.reset(rightMostX + minDistance + randomDistance, score, groundY);
     }
 

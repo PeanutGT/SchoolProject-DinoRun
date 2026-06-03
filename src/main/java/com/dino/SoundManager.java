@@ -4,7 +4,6 @@ import javafx.scene.media.AudioClip;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 
-import java.io.File;
 import java.util.Random;
 
 public class SoundManager {
@@ -51,15 +50,7 @@ public class SoundManager {
         barrierSound = loadSound("sounds/Barrier_sound.mp3");
         swordSound = loadSound("sounds/Sword_sound.mp3");
 
-        // 預熱，避免第一次播放延遲
-        if (jumpSound != null) jumpSound.play(0);
-        if (hitSound != null) hitSound.play(0);
-        if (scoreSound != null) scoreSound.play(0);
-        if (appleSound != null) appleSound.play(0);
-        if (milkSound != null) milkSound.play(0);
-        if (bookSound != null) bookSound.play(0);
-        if (barrierSound != null) barrierSound.play(0);
-        if (swordSound != null) swordSound.play(0);
+        // 移除預熱邏輯，因為 JavaFX 播放 MP3 遇到 play(0) 依然會原音量播放，導致主選單發出怪聲
 
         initialized = true;
     }

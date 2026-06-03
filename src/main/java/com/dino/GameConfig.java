@@ -37,6 +37,15 @@ public class GameConfig {
     public static final int QUESTION_BLOCK_INTERVAL = 250;
     public static final int COIN_SPAWN_INTERVAL = 40; // 每 40 分生成金幣
 
+    // 障礙物與飛龍設定
+    public static final double OBSTACLE_MIN_DISTANCE_BASE = 220;
+    public static final double OBSTACLE_DISTANCE_SPEED_RATIO = 28.0 / 60.0;
+    public static final double OBSTACLE_MAX_RANDOM_DISTANCE = 350;
+    public static final int BIRD_APPEAR_SCORE = 300;
+    public static final double BIRD_SPAWN_PROBABILITY = 0.35;
+    public static final double OBSTACLE_MIN_DISTANCE_BASE_VERSUS = 200;
+    public static final double OBSTACLE_DISTANCE_SPEED_RATIO_VERSUS = 22.0 / 60.0;
+    public static final double OBSTACLE_MAX_RANDOM_DISTANCE_VERSUS = 260;
 
     // 道具持有數量 (Q, W, E, R, F)
     public static int goldenAppleCount = 0;

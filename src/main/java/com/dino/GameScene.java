@@ -694,8 +694,8 @@ public class GameScene {
     }
 
     private void resetObstacle(ObstacleSlot obstacle) {
-        double minDistance = 220 + speed * (28.0 / 60.0);
-        double randomDistance = Math.random() * 350;
+        double minDistance = GameConfig.OBSTACLE_MIN_DISTANCE_BASE + speed * GameConfig.OBSTACLE_DISTANCE_SPEED_RATIO;
+        double randomDistance = Math.random() * GameConfig.OBSTACLE_MAX_RANDOM_DISTANCE;
         double rightMostX = getRightMostObstacleX();
         double newX = rightMostX + minDistance + randomDistance;
         obstacle.reset(newX, score, groundY);

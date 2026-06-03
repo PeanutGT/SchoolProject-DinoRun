@@ -52,12 +52,12 @@ public class ObstacleSlot {
     public void reset(double newX, int score, double groundY) {
         x = newX;
 
-        if (score < 300) {
+        if (score < GameConfig.BIRD_APPEAR_SCORE) {
             setCactus(newX);
             return;
         }
 
-        if (Math.random() < 0.35) {
+        if (Math.random() < GameConfig.BIRD_SPAWN_PROBABILITY) {
             setBird(newX, randomBirdY(groundY));
         } else {
             setCactus(newX);

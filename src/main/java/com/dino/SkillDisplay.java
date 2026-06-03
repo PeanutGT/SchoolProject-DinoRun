@@ -5,10 +5,7 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
+import javafx.scene.layout.StackPane;
 
 public class SkillDisplay {
 
@@ -20,12 +17,12 @@ public class SkillDisplay {
     private Label swordCountLabel;
 
     public SkillDisplay() {
-        root = new HBox(40);
+        root = new HBox(10);
         root.setAlignment(Pos.CENTER);
         
         // 置於畫面底部中央
-        root.setLayoutX(GameConfig.SCREEN_WIDTH / 2 - 175); 
-        root.setLayoutY(GameConfig.SCREEN_HEIGHT - 80);
+        root.setLayoutX(GameConfig.SCREEN_WIDTH / 2 - 145); 
+        root.setLayoutY(GameConfig.SCREEN_HEIGHT - 70);
 
         appleCountLabel = new Label("0");
         milkCountLabel = new Label("0");
@@ -44,25 +41,29 @@ public class SkillDisplay {
         update();
     }
 
-    private VBox createSlot(String imagePath, String key, Label countLabel) {
-        VBox box = new VBox(2);
-        box.setAlignment(Pos.CENTER);
-
-        Label keyLabel = new Label(key);
-        keyLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-        keyLabel.setTextFill(Color.DARKGRAY);
+    private StackPane createSlot(String imagePath, String key, Label countLabel) {
+        StackPane slot = new StackPane();
+        slot.setPrefSize(54, 54);
+        slot.setMinSize(54, 54);
+        slot.setMaxSize(54, 54);
+        slot.setStyle("-fx-background-color: #8b8b8b; -fx-border-color: #373737 #ffffff #ffffff #373737; -fx-border-width: 4; -fx-padding: 5;");
 
         Image img = ResourceManager.getImage(imagePath);
         ImageView imgView = new ImageView(img);
         imgView.setSmooth(false);
         imgView.setFitWidth(32);
         imgView.setFitHeight(32);
+        StackPane.setAlignment(imgView, Pos.CENTER);
 
-        countLabel.setFont(Font.font("Arial", FontWeight.BOLD, 14));
-        countLabel.setTextFill(Color.BLACK);
+        Label keyLabel = new Label(key);
+        keyLabel.setStyle("-fx-text-fill: white; -fx-font-family: 'Courier New', monospace; -fx-font-size: 12px; -fx-font-weight: bold; -fx-background-color: rgba(0,0,0,0.5); -fx-padding: 0 2;");
+        StackPane.setAlignment(keyLabel, Pos.TOP_LEFT);
 
-        box.getChildren().addAll(keyLabel, imgView, countLabel);
-        return box;
+        countLabel.setStyle("-fx-text-fill: white; -fx-font-family: 'Courier New', monospace; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-color: rgba(0,0,0,0.5); -fx-padding: 0 2;");
+        StackPane.setAlignment(countLabel, Pos.BOTTOM_RIGHT);
+
+        slot.getChildren().addAll(imgView, keyLabel, countLabel);
+        return slot;
     }
 
     public void update() {
