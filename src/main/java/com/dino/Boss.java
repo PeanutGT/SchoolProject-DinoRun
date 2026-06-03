@@ -13,7 +13,7 @@ import javafx.scene.shape.Rectangle;
 
 public class Boss {
     public enum State {
-        IDLE, PRE_RANGED, RANGED, PRE_SLAM, SLAM
+        IDLE, PRE_RANGED, RANGED, PRE_SLAM, SLAM, PRE_S_RANGED, S_RANGED
     }
 
     private Group group;
@@ -46,7 +46,7 @@ public class Boss {
         this.x = startX;
         this.y = startY;
 
-        walkFrames = new Image[]{
+        walkFrames = new Image[] {
                 ResourceManager.getImage("boss_bowser_walk1.png"),
                 ResourceManager.getImage("boss_bowser_walk2.png")
         };
@@ -73,7 +73,7 @@ public class Boss {
     public void update(double speed, long activeGameTime, double dtSeconds) {
         long now = activeGameTime;
         updateWalkAnimation();
-        
+
         // Update Boss AI State Machine
         switch (currentState) {
             case IDLE:
@@ -121,6 +121,22 @@ public class Boss {
                     visual.setOpacity(1.0);
                 }
                 break;
+            case PRE_S_RANGED:
+                visual.setOpacity(0.75);
+                if (now - stateTimer > 1000) {
+                    currentState = State.S_RANGED;
+                    stateTimer = now;
+                    visual.setOpacity(1.0);
+                    fireSFireball();
+                }
+                break;
+            case S_RANGED:
+                if (now - stateTimer > 500) {
+                    currentState = State.IDLE;
+                    stateTimer = now;
+                    visual.setOpacity(1.0);
+                }
+                break;
         }
 
         group.setLayoutX(x);
@@ -154,10 +170,12 @@ public class Boss {
 
     private void pickRandomAttack(long activeGameTime) {
         double r = Math.random();
-        if (r < 0.65) {
+        if (r < 0.40) {
             currentState = State.PRE_RANGED;
-        } else {
+        } else if (r < 0.60) {
             currentState = State.PRE_SLAM;
+        } else {
+            currentState = State.PRE_S_RANGED;
         }
         stateTimer = activeGameTime;
     }
@@ -168,41 +186,75 @@ public class Boss {
         BossProjectile p = new BossProjectile(
                 x,
                 bulletY,
-                64,
-                24,
+                48,
+                48,
                 GameConfig.BOSS_BULLET_SPEED,
-                new String[]{"boss_fire_1.png", "boss_fire_2.png"}
-        );
+                new String[] { "boss_fireball_1.png", "boss_fireball_2.png", "boss_fireball_3.png",
+                        "boss_fireball_4.png" },
+                false);
         projectiles.add(p);
         root.getChildren().add(p.getView());
     }
 
     private void fireShockwave() {
+        // 地震波使用貼地直線型火焰
         BossProjectile p = new BossProjectile(
                 x,
-                groundY - 42,
-                36,
-                36,
+                groundY - 30,
+                64,
+                24,
                 GameConfig.BOSS_SHOCKWAVE_SPEED,
-                new String[]{"boss_fireball_1.png", "boss_fireball_2.png", "boss_fireball_3.png", "boss_fireball_4.png"}
-        );
+                new String[] { "boss_fireball_1.png", "boss_fireball_2.png" },
+                false);
+        projectiles.add(p);
+        root.getChildren().add(p.getView());
+    }
+
+    private void fireSFireball() {
+        // S型火球，從中空高度射出，以 110 px/s 的慢速進行上下 S 型漂移
+        double bulletY = groundY - 80;
+        BossProjectile p = new BossProjectile(
+                x,
+                bulletY,
+                64,
+                24,
+                110.0, // 大幅降低速度，讓正弦波波動極其清晰好躲避
+                new String[] { "boss_fire_1.png", "boss_fire_2.png" },
+                true);
         projectiles.add(p);
         root.getChildren().add(p.getView());
     }
 
     public boolean checkCollision(Bounds dinoBounds) {
         // 檢查 Boss 本體碰撞
-        if (getHitBoxBounds().intersects(dinoBounds)) return true;
-        
+        if (getHitBoxBounds().intersects(dinoBounds))
+            return true;
+
         // 檢查所有彈幕與震波
         for (BossProjectile p : projectiles) {
-            if (p.getHitBoxBounds().intersects(dinoBounds)) return true;
+            if (p.getHitBoxBounds().intersects(dinoBounds))
+                return true;
         }
         return false;
     }
 
     public boolean isDefeated(long activeGameTime) {
-        return activeGameTime - startTime >= GameConfig.BOSS_SURVIVAL_TIME_MS; // 存活滿指定時間即算擊退
+        return hp <= 0 || (activeGameTime - startTime >= GameConfig.BOSS_SURVIVAL_TIME_MS); // 存活滿指定時間或HP歸零即算擊退
+    }
+
+    public void takeDamage(int amount) {
+        this.hp -= amount;
+        if (this.hp < 0) {
+            this.hp = 0;
+        }
+    }
+
+    public int getHp() {
+        return this.hp;
+    }
+
+    public double getX() {
+        return this.x;
     }
 
     public void removeAllProjectiles() {
@@ -224,14 +276,23 @@ public class Boss {
         private double pX, pY;
         private double pSpeed;
 
+        private boolean isSWave = false;
+        private double baselineY;
+        private double waveTime = 0.0;
+        private double amplitude = 60.0; // 上下振幅 60 像素
+        private double frequency = 5.0; // 頻率
+
         private ImageView pImageView;
         private Image[] frames;
         private int frameCounter = 0;
 
-        public BossProjectile(double x, double y, double w, double h, double speed, String[] imageNames) {
+        public BossProjectile(double x, double y, double w, double h, double speed, String[] imageNames,
+                boolean isSWave) {
             this.pX = x;
             this.pY = y;
+            this.baselineY = y;
             this.pSpeed = speed;
+            this.isSWave = isSWave;
 
             frames = new Image[imageNames.length];
             for (int i = 0; i < imageNames.length; i++) {
@@ -258,6 +319,12 @@ public class Boss {
             // 移動速度 = 投射物基礎速度 + 當前遊戲地板速度
             pX -= (pSpeed * dtSeconds + deltaSpeed);
             pGroup.setLayoutX(pX);
+
+            if (isSWave) {
+                waveTime += dtSeconds * frequency;
+                pY = baselineY + amplitude * Math.sin(waveTime);
+                pGroup.setLayoutY(pY);
+            }
             updateAnimation();
         }
 

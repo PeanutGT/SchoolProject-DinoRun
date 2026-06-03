@@ -7,6 +7,11 @@ import javafx.application.Platform;
 import javafx.scene.control.TextInputDialog;
 
 import javafx.animation.AnimationTimer;
+import javafx.animation.FadeTransition;
+import javafx.animation.ParallelTransition;
+import javafx.animation.TranslateTransition;
+import javafx.scene.text.FontWeight;
+import javafx.util.Duration;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -20,6 +25,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
+import javafx.scene.Group;
 
 public class GameScene {
 
@@ -58,6 +64,7 @@ public class GameScene {
 
     private ImageView gameOverImage;
     private ImageView restartImage;
+    private Button gameOverMenuBtn;
     private boolean gameOver = false;
 
     private boolean bossPhase = false;
@@ -86,12 +93,35 @@ public class GameScene {
     private Label barrierCountdownLabel;
     private Label extraJumpLabel;
 
+    private List<Coin> coinsList;
+    private CoinDisplay coinDisplay;
+    private int sessionCoins = 0;
+    private int lastCoinSpawnScore = 0;
+
     private boolean spacePressed = false;
+    private boolean upPressed = false;
     private boolean jumpAfterRestart = false;
+
+    // 骨頭迴力鏢變數
+    private Group boomerangGroup;
+    private ImageView boomerangView;
+    private Rectangle boomerangHitBox;
+    private boolean boomerangActive = false;
+    private double boomerangTime = 0.0;
+    private double boomerangStartX = 0.0;
+    private double boomerangStartY = 0.0;
+    private boolean boomerangHasDamaged = false;
+    private double boomerangMaxDist = 350.0;
+
+    // Boss 生命條 UI 變數
+    private Pane bossHealthBarContainer;
+    private Rectangle bossHealthInnerBar;
+    private Label bossHealthLabel;
 
     // Game Clock
     private long activeGameTime = 0;
     private long lastFrameTime = 0;
+    private double regenTimer = 0.0;
 
     // 引入 GameConfig 常數
     private final double acceleration = GameConfig.ACCELERATION;
@@ -136,6 +166,51 @@ public class GameScene {
         restartImage.setY(170);
         restartImage.setVisible(false);
 
+        // 新增遊戲結束時的「返回主選單」按鈕，居中放置在重新開始按鈕下方
+        gameOverMenuBtn = new Button("返回主選單");
+        gameOverMenuBtn.setStyle(
+                "-fx-background-color: #8B4513; " +
+                        "-fx-text-fill: white; " +
+                        "-fx-border-color: white; " +
+                        "-fx-border-width: 2; " +
+                        "-fx-font-family: 'Microsoft JhengHei', 'Courier New', monospace; " +
+                        "-fx-font-size: 14px; " +
+                        "-fx-font-weight: bold; " +
+                        "-fx-padding: 6 14; " +
+                        "-fx-cursor: hand;");
+        gameOverMenuBtn.setLayoutX(435);
+        gameOverMenuBtn.setLayoutY(230);
+        gameOverMenuBtn.setVisible(false);
+
+        gameOverMenuBtn.setOnMouseEntered(e -> gameOverMenuBtn.setStyle(
+                "-fx-background-color: #5d4037; " +
+                        "-fx-text-fill: #ffca28; " +
+                        "-fx-border-color: #ffca28; " +
+                        "-fx-border-width: 2; " +
+                        "-fx-font-family: 'Microsoft JhengHei', 'Courier New', monospace; " +
+                        "-fx-font-size: 14px; " +
+                        "-fx-font-weight: bold; " +
+                        "-fx-padding: 6 14; " +
+                        "-fx-cursor: hand;"));
+
+        gameOverMenuBtn.setOnMouseExited(e -> gameOverMenuBtn.setStyle(
+                "-fx-background-color: #8B4513; " +
+                        "-fx-text-fill: white; " +
+                        "-fx-border-color: white; " +
+                        "-fx-border-width: 2; " +
+                        "-fx-font-family: 'Microsoft JhengHei', 'Courier New', monospace; " +
+                        "-fx-font-size: 14px; " +
+                        "-fx-font-weight: bold; " +
+                        "-fx-padding: 6 14; " +
+                        "-fx-cursor: hand;"));
+
+        gameOverMenuBtn.setOnAction(e -> {
+            if (timer != null)
+                timer.stop();
+            SoundManager.stopGameBgm();
+            dinoMain.showMainMenu();
+        });
+
         restartImage.setOnMouseClicked(e -> {
             if (gameOver) {
                 restartGame();
@@ -143,14 +218,16 @@ public class GameScene {
         });
 
         scoreDisplay = new ScoreDisplay();
-        heartDisplay = new HeartDisplay();
+        dino = new Dino(100, GameConfig.GROUND_Y, character);
+        heartDisplay = new HeartDisplay(dino.getMaxLives());
         skillDisplay = new SkillDisplay();
         questionBlocks = new ArrayList<>();
+        coinsList = new ArrayList<>();
+        coinDisplay = new CoinDisplay();
 
-        dino = new Dino(100, GameConfig.GROUND_Y, character);
-
-        signpost = new Label("【操作說明】\n[空白鍵] 跳躍/開始\n[下方向鍵] 蹲下\n[自訂技能按鍵] 施放技能");
-        signpost.setStyle("-fx-background-color: #8B4513; -fx-text-fill: white; -fx-border-color: white; -fx-border-width: 2; -fx-font-family: 'Courier New', monospace; -fx-padding: 10; -fx-font-weight: bold;");
+        signpost = new Label("【操作說明】\n[上方向鍵] 跳躍\n[空白鍵] 開始/骨頭迴力鏢(Boss戰)\n[下方向鍵] 蹲下\n[自訂技能按鍵] 施放技能");
+        signpost.setStyle(
+                "-fx-background-color: #8B4513; -fx-text-fill: white; -fx-border-color: white; -fx-border-width: 2; -fx-font-family: 'Courier New', monospace; -fx-padding: 10; -fx-font-weight: bold;");
         signpost.setLayoutX(300);
         signpost.setLayoutY(GameConfig.GROUND_Y - 120);
 
@@ -181,13 +258,10 @@ public class GameScene {
                 cloud1,
                 cloud2,
                 cloud3,
-                gameOverImage,
-                restartImage,
                 ground1,
                 ground2,
                 signpost,
-                dino.getView()
-        );
+                dino.getView());
 
         screenFlash = new Rectangle(screenWidth, GameConfig.SCREEN_HEIGHT, Color.rgb(255, 0, 0, 0.5));
         screenFlash.setVisible(false);
@@ -201,16 +275,19 @@ public class GameScene {
         root.getChildren().addAll(
                 milkFog,
                 heartDisplay.getView(),
+                coinDisplay.getView(),
                 scoreDisplay.getView(),
                 skillDisplay.getView(),
                 barrierCountdownLabel,
-                extraJumpLabel
-        );
+                extraJumpLabel,
+                gameOverImage,
+                restartImage,
+                gameOverMenuBtn);
 
         createPauseOverlay();
         root.getChildren().add(pauseOverlay);
 
-        dino.showHint("按空白鍵開始！");
+        dino.showHint("按空白鍵或上鍵開始！");
         startGameLoop();
     }
 
@@ -244,7 +321,8 @@ public class GameScene {
             timer.start();
         });
         menuBtn.setOnAction(e -> {
-            if (timer != null) timer.stop();
+            if (timer != null)
+                timer.stop();
             SoundManager.stopGameBgm();
             dinoMain.showMainMenu();
         });
@@ -344,6 +422,33 @@ public class GameScene {
 
         dino.update(activeGameTime, dtSeconds);
 
+        // 處理金幣
+        double dinoCenterX = dino.getView().getLayoutX() + dino.getView().getBoundsInLocal().getWidth() / 2.0;
+        double dinoCenterY = dino.getView().getLayoutY() + dino.getView().getBoundsInLocal().getHeight() / 2.0;
+        double magnetRadius = SaveManager.getMagnetRadius();
+
+        java.util.Iterator<Coin> coinIt = coinsList.iterator();
+        while (coinIt.hasNext()) {
+            Coin coin = coinIt.next();
+            coin.update(speed, dtSeconds, dinoCenterX, dinoCenterY, magnetRadius);
+            if (coin.getHitBoxBounds().intersects(dino.getHitBoxBounds())) {
+                root.getChildren().remove(coin.getView());
+                coinIt.remove();
+
+                int multiplier = SaveManager.getCoinMultiplier();
+                int coinsEarned = 1 * multiplier;
+                sessionCoins += coinsEarned;
+                SaveManager.addCoins(coinsEarned);
+                coinDisplay.update(sessionCoins);
+
+                SoundManager.playScore();
+                showFloatingText("+" + coinsEarned, coin.getX(), coin.getY());
+            } else if (coin.isOffScreen()) {
+                root.getChildren().remove(coin.getView());
+                coinIt.remove();
+            }
+        }
+
         // 處理問號方塊
         java.util.Iterator<QuestionBlock> it = questionBlocks.iterator();
         while (it.hasNext()) {
@@ -352,6 +457,7 @@ public class GameScene {
             if (qb.getHitBoxBounds().intersects(dino.getHitBoxBounds())) {
                 root.getChildren().remove(qb.getView());
                 it.remove();
+                
                 giveRandomItem();
             } else if (qb.isOffScreen()) {
                 root.getChildren().remove(qb.getView());
@@ -392,13 +498,101 @@ public class GameScene {
             }
         }
 
+        // 處理緩慢自動回血
+        if (SaveManager.hasRegen() && !dino.isDead() && dino.getLives() < dino.getMaxLives()) {
+            regenTimer += dtSeconds;
+            double targetTime = 40.0;
+            if (SaveManager.getRegenLevel() == 2) targetTime = 20.0;
+            else if (SaveManager.getRegenLevel() == 3) targetTime = 10.0;
+
+            if (regenTimer >= targetTime) {
+                regenTimer = 0.0;
+                dino.healOne();
+                heartDisplay.update(dino.getLives());
+                SoundManager.playAppleSound(); // 播放清脆的回血成功音效！
+                showFloatingText("+1 HP", dino.getView().getLayoutX() + 20, dino.getView().getLayoutY() - 30);
+            }
+        } else {
+            regenTimer = 0.0; // 如果滿血或沒有該功能，重置計時器
+        }
+
+        // 處理骨頭迴力鏢運動與碰撞
+        if (boomerangActive) {
+            boomerangTime += dtSeconds;
+            // 快速自轉
+            boomerangView.setRotate(boomerangView.getRotate() + dtSeconds * 720.0);
+
+            double duration = 0.5;
+            double outward = 0.25;
+            double maxDist = boomerangMaxDist;
+
+            if (boomerangTime < outward) {
+                double pct = boomerangTime / outward;
+                double curX = boomerangStartX + maxDist * pct;
+                double curY = boomerangStartY;
+                boomerangGroup.setLayoutX(curX);
+                boomerangGroup.setLayoutY(curY);
+            } else if (boomerangTime < duration) {
+                double pct = (boomerangTime - outward) / outward;
+                double outX = boomerangStartX + maxDist;
+                double outY = boomerangStartY;
+                // 追蹤恐龍的當前座標，優雅回收到手
+                double targetX = dino.getView().getLayoutX() + dino.getView().getBoundsInLocal().getWidth() / 2.0 - 16;
+                double targetY = dino.getView().getLayoutY() + dino.getView().getBoundsInLocal().getHeight() / 2.0 - 16;
+
+                double curX = outX * (1.0 - pct) + targetX * pct;
+                double curY = outY * (1.0 - pct) + targetY * pct;
+                boomerangGroup.setLayoutX(curX);
+                boomerangGroup.setLayoutY(curY);
+            } else {
+                // 回收到手，銷毀
+                root.getChildren().remove(boomerangGroup);
+                boomerangActive = false;
+            }
+
+            // 碰撞檢測：擊中 Boss
+            if (boomerangActive && !boomerangHasDamaged && bossPhase && boss != null) {
+                if (boomerangHitBox.localToScene(boomerangHitBox.getBoundsInLocal())
+                        .intersects(boss.getHitBoxBounds())) {
+                    boss.takeDamage(10);
+                    boomerangHasDamaged = true;
+                    SoundManager.playHit(); // 播放擊中音效
+
+                    // 在 Boss 上方飄字
+                    double damageX = boss.getHitBoxBounds().getCenterX() - 20;
+                    double damageY = boss.getHitBoxBounds().getMinY() - 20;
+                    showFloatingText("-10 HP", damageX, damageY);
+                }
+            }
+        }
+
         if (bossPhase && boss != null) {
             boss.update(speed, activeGameTime, dtSeconds);
+
+            // 更新 Boss 生命條 UI
+            if (bossHealthBarContainer != null && bossHealthInnerBar != null && bossHealthLabel != null) {
+                double hpPct = (double) boss.getHp() / 100.0;
+                bossHealthInnerBar.setWidth(296 * hpPct);
+                bossHealthLabel.setText("BOSS: Bowser (" + boss.getHp() + "/100)");
+            }
+
             if (boss.isDefeated(activeGameTime)) {
                 bossPhase = false;
                 boss.removeAllProjectiles();
                 boss = null;
-                
+
+                // 銷毀生命條 UI
+                if (bossHealthBarContainer != null) {
+                    root.getChildren().remove(bossHealthBarContainer);
+                    bossHealthBarContainer = null;
+                }
+
+                // 銷毀在場上的迴力鏢
+                if (boomerangActive) {
+                    root.getChildren().remove(boomerangGroup);
+                    boomerangActive = false;
+                }
+
                 inBossGracePeriod = true;
                 bossGracePeriodStartTime = activeGameTime;
             }
@@ -420,7 +614,8 @@ public class GameScene {
     private void checkCollision() {
         if (bossPhase && boss != null) {
             if (boss.checkCollision(dino.getHitBoxBounds())) {
-                if (barrierActive) return; // 屏障啟動時免傷
+                if (barrierActive)
+                    return; // 屏障啟動時免傷
                 boolean damaged = dino.hit(activeGameTime);
                 if (damaged) {
                     SoundManager.playHit();
@@ -472,16 +667,19 @@ public class GameScene {
                 Optional<String> result = dialog.showAndWait();
                 result.ifPresent(name -> {
                     String cleanName = name.replace(",", "").trim();
-                    if (cleanName.isEmpty()) cleanName = "Unknown";
+                    if (cleanName.isEmpty())
+                        cleanName = "Unknown";
                     LeaderboardManager.addScore(cleanName, score, currentCharacter);
                 });
-                
+
                 gameOverImage.setVisible(true);
                 restartImage.setVisible(true);
+                gameOverMenuBtn.setVisible(true);
             });
         } else {
             gameOverImage.setVisible(true);
             restartImage.setVisible(true);
+            gameOverMenuBtn.setVisible(true);
         }
     }
 
@@ -525,9 +723,41 @@ public class GameScene {
         bossIncoming = false;
         bossPhase = true;
         boss = new Boss(root, activeGameTime);
-        
+
+        screenFlash.setFill(Color.rgb(255, 0, 0, 0.5));
         screenFlash.setVisible(true);
         screenFlashStartTime = activeGameTime;
+
+        // 創建 Boss 生命值血條 UI
+        bossHealthBarContainer = new Pane();
+        bossHealthBarContainer.setLayoutX(GameConfig.SCREEN_WIDTH / 2 - 150);
+        bossHealthBarContainer.setLayoutY(20);
+
+        Rectangle bgBar = new Rectangle(300, 16);
+        bgBar.setFill(Color.DARKGRAY);
+        bgBar.setStroke(Color.WHITE);
+        bgBar.setStrokeWidth(2);
+
+        bossHealthInnerBar = new Rectangle(296, 12);
+        bossHealthInnerBar.setX(2);
+        bossHealthInnerBar.setY(2);
+        bossHealthInnerBar.setFill(Color.RED);
+
+        bossHealthLabel = new Label("BOSS: Bowser (100/100)");
+        bossHealthLabel.setFont(Font.font("Courier New", FontWeight.BOLD, 14));
+        bossHealthLabel.setTextFill(Color.WHITE);
+        bossHealthLabel.setLayoutY(-18);
+        bossHealthLabel.setLayoutX(0);
+        bossHealthLabel.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 2, 0, 1, 1);");
+
+        bossHealthBarContainer.getChildren().addAll(bgBar, bossHealthInnerBar, bossHealthLabel);
+
+        int insertIndex = root.getChildren().indexOf(milkFog);
+        if (insertIndex != -1) {
+            root.getChildren().add(insertIndex, bossHealthBarContainer);
+        } else {
+            root.getChildren().add(bossHealthBarContainer);
+        }
     }
 
     private void updateGround(double dtSeconds) {
@@ -540,7 +770,7 @@ public class GameScene {
         if (ground2.getX() <= -groundWidth) {
             ground2.setX(ground1.getX() + groundWidth);
         }
-        
+
         if (signpost.getLayoutX() > -300) {
             signpost.setLayoutX(signpost.getLayoutX() - speed * dtSeconds);
         }
@@ -553,14 +783,17 @@ public class GameScene {
         cloud2.setX(cloud2.getX() - cloudSpeed);
         cloud3.setX(cloud3.getX() - cloudSpeed);
 
-        if (cloud1.getX() < -100) resetCloud(cloud1);
-        if (cloud2.getX() < -100) resetCloud(cloud2);
-        if (cloud3.getX() < -100) resetCloud(cloud3);
+        if (cloud1.getX() < -100)
+            resetCloud(cloud1);
+        if (cloud2.getX() < -100)
+            resetCloud(cloud2);
+        if (cloud3.getX() < -100)
+            resetCloud(cloud3);
     }
 
     private void updateScore(double dtSeconds) {
         distance += speed * dtSeconds;
-        int newScore = (int)(distance / 50);
+        int newScore = (int) (distance / 50);
 
         if (newScore > score) {
             score = newScore;
@@ -569,12 +802,50 @@ public class GameScene {
                 SoundManager.playScore();
                 scoreDisplay.flashCurrentScore(score);
             }
-            
-            if (score > 0 && score % GameConfig.QUESTION_BLOCK_INTERVAL == 0 && score != lastQuestionBlockScore) {
+
+            int qbInterval = GameConfig.QUESTION_BLOCK_INTERVAL;
+            int qbLevel = SaveManager.getQuestionBoxLevel();
+            if (qbLevel == 1) {
+                qbInterval = 200;
+            } else if (qbLevel == 2) {
+                qbInterval = 150;
+            } else if (qbLevel >= 3) {
+                qbInterval = 100;
+            }
+
+            if (score > 0 && score / qbInterval > lastQuestionBlockScore / qbInterval) {
                 lastQuestionBlockScore = score;
                 QuestionBlock qb = new QuestionBlock(screenWidth, groundY);
                 questionBlocks.add(qb);
-                root.getChildren().add(qb.getView());
+                int idx = root.getChildren().indexOf(milkFog);
+                if (idx != -1) {
+                    root.getChildren().add(idx, qb.getView());
+                } else {
+                    root.getChildren().add(qb.getView());
+                }
+            }
+
+            int coinSpawnInterval = SaveManager.hasMoreCoins() ? 20 : GameConfig.COIN_SPAWN_INTERVAL;
+            if (score > 0 && score % coinSpawnInterval == 0 && score != lastCoinSpawnScore) {
+                lastCoinSpawnScore = score;
+                double coinY;
+                double r = Math.random();
+                if (r < 0.4) {
+                    coinY = groundY - 20;
+                } else if (r < 0.7) {
+                    coinY = groundY - 60;
+                } else {
+                    coinY = groundY - 110;
+                }
+                double safeX = getSafeCoinX();
+                Coin coin = new Coin(safeX, coinY);
+                coinsList.add(coin);
+                int idx = root.getChildren().indexOf(milkFog);
+                if (idx != -1) {
+                    root.getChildren().add(idx, coin.getView());
+                } else {
+                    root.getChildren().add(coin.getView());
+                }
             }
 
             if (!bossHasAppeared && score >= GameConfig.BOSS_TRIGGER_SCORE) {
@@ -596,7 +867,7 @@ public class GameScene {
         // 動態縮放機制
         javafx.scene.transform.Scale scale = new javafx.scene.transform.Scale(1, 1);
         root.getTransforms().add(scale);
-        
+
         javafx.beans.value.ChangeListener<Number> sizeListener = (obs, oldVal, newVal) -> {
             double w = scene.getWidth();
             double h = scene.getHeight();
@@ -607,10 +878,10 @@ public class GameScene {
             double scaleX = w / GameConfig.SCREEN_WIDTH;
             double scaleY = h / GameConfig.SCREEN_HEIGHT;
             double minScale = Math.min(scaleX, scaleY);
-            
+
             scale.setX(minScale);
             scale.setY(minScale);
-            
+
             root.setTranslateX((w - GameConfig.SCREEN_WIDTH * minScale) / 2);
             root.setTranslateY((h - GameConfig.SCREEN_HEIGHT * minScale) / 2);
         };
@@ -623,10 +894,31 @@ public class GameScene {
                 togglePause();
                 return;
             }
-            if (isPaused) return;
+            if (isPaused)
+                return;
 
             if (e.getCode() == KeyCode.SPACE && !spacePressed) {
                 spacePressed = true;
+                if (waitingToStart) {
+                    waitingToStart = false;
+                    dino.hideHint();
+                    SoundManager.playGameBgm();
+                    return;
+                }
+                if (gameOver) {
+                    restartGame();
+                    waitingToStart = false;
+                    dino.hideHint();
+                    SoundManager.playGameBgm();
+                } else {
+                    if (bossPhase && boss != null) {
+                        throwBoomerang();
+                    }
+                }
+            }
+
+            if (e.getCode() == KeyCode.UP && !upPressed) {
+                upPressed = true;
                 if (waitingToStart) {
                     waitingToStart = false;
                     dino.hideHint();
@@ -650,6 +942,7 @@ public class GameScene {
                     }
                 }
             }
+
             if (waitingToStart) {
                 return;
             }
@@ -702,7 +995,12 @@ public class GameScene {
                     // 強制在恐龍前方生成一個道具方塊
                     QuestionBlock qb = new QuestionBlock(dino.getHitBoxBounds().getMaxX() + 50, GameConfig.GROUND_Y);
                     questionBlocks.add(qb);
-                    root.getChildren().add(qb.getView());
+                    int idx = root.getChildren().indexOf(milkFog);
+                    if (idx != -1) {
+                        root.getChildren().add(idx, qb.getView());
+                    } else {
+                        root.getChildren().add(qb.getView());
+                    }
                 } else if (e.getCode() == KeyCode.F5) {
                     // 強制召喚 Boss
                     if (!bossPhase) {
@@ -713,10 +1011,14 @@ public class GameScene {
         });
 
         scene.setOnKeyReleased(e -> {
-            if (isPaused) return;
+            if (isPaused)
+                return;
 
             if (e.getCode() == KeyCode.SPACE) {
                 spacePressed = false;
+            }
+            if (e.getCode() == KeyCode.UP) {
+                upPressed = false;
                 if (!gameOver) {
                     dino.releaseJump();
                 }
@@ -728,7 +1030,8 @@ public class GameScene {
     }
 
     private void togglePause() {
-        if (gameOver) return;
+        if (gameOver)
+            return;
 
         isPaused = !isPaused;
         if (isPaused) {
@@ -755,7 +1058,7 @@ public class GameScene {
         jumpAfterRestart = false;
         waitingToStart = true;
         signpost.setLayoutX(300);
-        dino.showHint("按空白鍵開始！");
+        dino.showHint("按空白鍵或上鍵開始！");
         activeGameTime = 0;
         lastFrameTime = 0;
 
@@ -763,21 +1066,38 @@ public class GameScene {
             boss.removeAllProjectiles();
             boss = null;
         }
+        if (boomerangActive) {
+            root.getChildren().remove(boomerangGroup);
+            boomerangActive = false;
+        }
+        if (bossHealthBarContainer != null) {
+            root.getChildren().remove(bossHealthBarContainer);
+            bossHealthBarContainer = null;
+        }
         bossPhase = false;
         bossIncoming = false;
         bossHasAppeared = false;
         inBossGracePeriod = false;
-        
+
         lastQuestionBlockScore = 0;
         barrierActive = false;
         milkFog.setVisible(false);
         dino.getView().setOpacity(1.0);
-        
+
         for (QuestionBlock qb : questionBlocks) {
             root.getChildren().remove(qb.getView());
         }
         questionBlocks.clear();
-        
+
+        for (Coin coin : coinsList) {
+            root.getChildren().remove(coin.getView());
+        }
+        coinsList.clear();
+        sessionCoins = 0;
+        lastCoinSpawnScore = 0;
+        regenTimer = 0.0;
+        coinDisplay.update(sessionCoins);
+
         GameConfig.goldenAppleCount = 0;
         GameConfig.milkBucketCount = 0;
         GameConfig.enchantedBookCount = 0;
@@ -787,6 +1107,7 @@ public class GameScene {
 
         gameOverImage.setVisible(false);
         restartImage.setVisible(false);
+        gameOverMenuBtn.setVisible(false);
 
         dino.reset();
         heartDisplay.update(dino.getLives());
@@ -804,29 +1125,30 @@ public class GameScene {
     }
 
     private void giveRandomItem() {
-        int totalWeight = GameConfig.weightGoldenApple + GameConfig.weightMilkBucket + 
-                          GameConfig.weightEnchantedBook + GameConfig.weightBarrier + GameConfig.weightWoodenSword;
-        int rand = (int)(Math.random() * totalWeight);
-        
+        int totalWeight = GameConfig.weightGoldenApple + GameConfig.weightMilkBucket +
+                GameConfig.weightEnchantedBook + GameConfig.weightBarrier + GameConfig.weightWoodenSword;
+        int rand = (int) (Math.random() * totalWeight);
+
         if (rand < GameConfig.weightGoldenApple) {
-            GameConfig.goldenAppleCount++; 
+            GameConfig.goldenAppleCount++;
             dino.showHint("獲得金蘋果 (Q): 補滿生命值！");
         } else if (rand < GameConfig.weightGoldenApple + GameConfig.weightMilkBucket) {
-            GameConfig.milkBucketCount++; 
+            GameConfig.milkBucketCount++;
             dino.showHint("獲得牛奶 (W): 獲得500pt但致盲視野5秒！");
         } else if (rand < GameConfig.weightGoldenApple + GameConfig.weightMilkBucket + GameConfig.weightEnchantedBook) {
-            GameConfig.enchantedBookCount++; 
+            GameConfig.enchantedBookCount++;
             dino.showHint("獲得附魔書 (E): 獲得額外跳躍次數！");
-        } else if (rand < GameConfig.weightGoldenApple + GameConfig.weightMilkBucket + GameConfig.weightEnchantedBook + GameConfig.weightBarrier) {
-            GameConfig.barrierCount++; 
+        } else if (rand < GameConfig.weightGoldenApple + GameConfig.weightMilkBucket + GameConfig.weightEnchantedBook
+                + GameConfig.weightBarrier) {
+            GameConfig.barrierCount++;
             dino.showHint("獲得屏障 (R): 12秒無敵護盾！");
         } else {
-            GameConfig.woodenSwordCount++; 
+            GameConfig.woodenSwordCount++;
             dino.showHint("獲得木劍 (F): 清除畫面上所有障礙物！(對Boss無效)");
         }
-        
+
         skillDisplay.update();
-        SoundManager.playScore(); 
+        SoundManager.playScore();
     }
 
     private void clearScreenObstacles() {
@@ -843,13 +1165,13 @@ public class GameScene {
                 // 1. 確實將障礙物的圖片從渲染畫面上拔除
                 root.getChildren().remove(obstacle.getCactus().getView());
                 root.getChildren().remove(obstacle.getBird().getView());
-                
+
                 // 2. 使用 Iterator 安全移除，避免 ConcurrentModificationException
                 iterator.remove();
-                
+
                 // 3. 觸發加分
                 distance += GameConfig.OBSTACLE_CLEAR_SCORE * 50;
-                
+
                 // 4. 紀錄需要補回的物件，避免破壞物件池機制導致後續無障礙物
                 replacementObstacles.add(new ObstacleSlot(GameConfig.SCREEN_WIDTH, groundY));
             }
@@ -857,7 +1179,8 @@ public class GameScene {
 
         // 將新生成的障礙物補回清單與畫面，並確保 Z-index 正確 (在 UI 層之下)
         int insertIndex = root.getChildren().indexOf(milkFog);
-        if (insertIndex == -1) insertIndex = root.getChildren().size();
+        if (insertIndex == -1)
+            insertIndex = root.getChildren().size();
 
         for (ObstacleSlot newSlot : replacementObstacles) {
             root.getChildren().add(insertIndex, newSlot.getCactus().getView());
@@ -868,12 +1191,13 @@ public class GameScene {
     }
 
     private boolean isCloudOverlapping(ImageView targetCloud, double newX, double newY) {
-        ImageView[] clouds = {cloud1, cloud2, cloud3};
+        ImageView[] clouds = { cloud1, cloud2, cloud3 };
         double cloudWidth = targetCloud.getBoundsInLocal().getWidth();
         double cloudHeight = targetCloud.getBoundsInLocal().getHeight();
 
         for (ImageView cloud : clouds) {
-            if (cloud == targetCloud) continue;
+            if (cloud == targetCloud)
+                continue;
             double otherX = cloud.getX();
             double otherY = cloud.getY();
             double otherWidth = cloud.getBoundsInLocal().getWidth();
@@ -882,7 +1206,8 @@ public class GameScene {
             boolean overlapX = newX < otherX + otherWidth + 80 && newX + cloudWidth + 80 > otherX;
             boolean overlapY = newY < otherY + otherHeight + 30 && newY + cloudHeight + 30 > otherY;
 
-            if (overlapX && overlapY) return true;
+            if (overlapX && overlapY)
+                return true;
         }
         return false;
     }
@@ -900,6 +1225,101 @@ public class GameScene {
 
         cloud.setX(newX);
         cloud.setY(newY);
+    }
+
+    private void showFloatingText(String text, double x, double y) {
+        Label label = new Label(text);
+        label.setFont(Font.font("Courier New", FontWeight.BOLD, 22));
+        label.setTextFill(Color.web("#FFD54F"));
+        label.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.6), 3, 0, 1, 1);");
+        label.setLayoutX(x);
+        label.setLayoutY(y);
+        root.getChildren().add(label);
+
+        TranslateTransition translate = new TranslateTransition(Duration.millis(600), label);
+        translate.setByY(-50);
+
+        FadeTransition fade = new FadeTransition(Duration.millis(600), label);
+        fade.setFromValue(1.0);
+        fade.setToValue(0.0);
+
+        ParallelTransition parallel = new ParallelTransition(translate, fade);
+        parallel.setOnFinished(e -> root.getChildren().remove(label));
+        parallel.play();
+    }
+
+    private double getSafeCoinX() {
+        double candidateX = screenWidth;
+        boolean safe = false;
+        int attempts = 0;
+
+        while (!safe && attempts < 10) {
+            safe = true;
+            for (ObstacleSlot obs : obstacles) {
+                double obsX = obs.getX();
+                double dist = Math.abs(obsX - candidateX);
+                // 確保金幣與障礙物的左右距離至少大於 130 像素，保證玩家反應與操作空間
+                if (dist < 130.0) {
+                    candidateX = Math.max(candidateX, obsX) + 140.0;
+                    safe = false;
+                    break;
+                }
+            }
+            attempts++;
+        }
+        return candidateX;
+    }
+
+    private void throwBoomerang() {
+        if (boomerangActive) {
+            return; // 迴力鏢尚未回收，無法再次拋出
+        }
+
+        Image boneImg = ResourceManager.getImage("bone.png");
+        if (boneImg == null) {
+            return;
+        }
+
+        boomerangView = new ImageView(boneImg);
+        boomerangView.setFitWidth(32);
+        boomerangView.setFitHeight(32);
+        boomerangView.setSmooth(false);
+
+        // 碰撞箱 (與圖片大小相當)
+        boomerangHitBox = new Rectangle(0, 0, 32, 32);
+        boomerangHitBox.setVisible(false);
+
+        boomerangGroup = new Group(boomerangView, boomerangHitBox);
+
+        double dinoWidth = dino.getView().getBoundsInLocal().getWidth();
+        double dinoHeight = dino.getView().getBoundsInLocal().getHeight();
+        double startX = dino.getView().getLayoutX() + dinoWidth - 10;
+        double startY = dino.getView().getLayoutY() + dinoHeight / 2 - 16;
+
+        // 動態計算丟到 Boss 的長度
+        double targetDist = 350.0;
+        if (bossPhase && boss != null) {
+            double bossX = boss.getX() + 42.0; // 庫巴的中心 X (寬度為 84，中心在 +42)
+            double dinoX = dino.getView().getLayoutX() + dinoWidth / 2.0;
+            double distanceToBoss = (bossX - dinoX) + 20.0; // 多飛 20 像素確保覆蓋與碰撞
+            targetDist = Math.max(350.0, distanceToBoss);
+        }
+        boomerangMaxDist = targetDist;
+
+        boomerangGroup.setLayoutX(startX);
+        boomerangGroup.setLayoutY(startY);
+        boomerangStartX = startX;
+        boomerangStartY = startY;
+
+        boomerangActive = true;
+        boomerangTime = 0.0;
+        boomerangHasDamaged = false;
+
+        // 播放拋擲迴力鏢音效
+        SoundManager.playScore();
+
+        // 把迴力鏢加到最上層，以免被其他節點遮蓋
+        root.getChildren().add(boomerangGroup);
     }
 
     public Pane getView() {

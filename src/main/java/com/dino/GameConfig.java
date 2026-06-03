@@ -19,8 +19,8 @@ public class GameConfig {
     public static boolean devModeEnabled = false;
 
     // Boss 戰設定
-    public static final int BOSS_TRIGGER_SCORE = 1000;
-    public static final int BOSS_HP = 1000;
+    public static final int BOSS_TRIGGER_SCORE = 500;
+    public static final int BOSS_HP = 100;
     public static final long BOSS_SURVIVAL_TIME_MS = 30000;
     public static final long BOSS_RETREAT_GRACE_PERIOD_MS = 2000;
     public static final double BOSS_SLAM_JUMP_VELOCITY = -8 * 60;
@@ -35,6 +35,8 @@ public class GameConfig {
     public static final long MILK_FOG_DURATION_MS = 5000;
     public static final long BARRIER_DURATION_MS = 12000;
     public static final int QUESTION_BLOCK_INTERVAL = 250;
+    public static final int COIN_SPAWN_INTERVAL = 40; // 每 40 分生成金幣
+
 
     // 道具持有數量 (Q, W, E, R, F)
     public static int goldenAppleCount = 0;

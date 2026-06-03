@@ -1,5 +1,7 @@
 package com.dino;
 
+import java.util.ArrayList;
+import java.util.List;
 import javafx.scene.Group;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -11,25 +13,28 @@ public class HeartDisplay {
     private Image fullHeartImage;
     private Image emptyHeartImage;
 
-    private ImageView heart1;
-    private ImageView heart2;
-    private ImageView heart3;
-
+    private List<ImageView> hearts;
     private final double heartSize = 24;
 
     public HeartDisplay() {
+        this(3 + SaveManager.getLivesBonus());
+    }
+
+    public HeartDisplay(int maxLives) {
         root = new Group();
 
         fullHeartImage = ResourceManager.getImage("heart_full.png");
         emptyHeartImage = ResourceManager.getImage("heart_empty.png");
+        
+        hearts = new ArrayList<>();
 
-        heart1 = createHeart(30, 25);
-        heart2 = createHeart(60, 25);
-        heart3 = createHeart(90, 25);
+        for (int i = 0; i < maxLives; i++) {
+            ImageView heart = createHeart(30 + i * 30, 25);
+            hearts.add(heart);
+            root.getChildren().add(heart);
+        }
 
-        root.getChildren().addAll(heart1, heart2, heart3);
-
-        update(3);
+        update(maxLives);
     }
 
     private ImageView createHeart(double x, double y) {
@@ -47,22 +52,13 @@ public class HeartDisplay {
     }
 
     public void update(int lives) {
-        if (lives >= 1) {
-            heart1.setImage(fullHeartImage);
-        } else {
-            heart1.setImage(emptyHeartImage);
-        }
-
-        if (lives >= 2) {
-            heart2.setImage(fullHeartImage);
-        } else {
-            heart2.setImage(emptyHeartImage);
-        }
-
-        if (lives >= 3) {
-            heart3.setImage(fullHeartImage);
-        } else {
-            heart3.setImage(emptyHeartImage);
+        for (int i = 0; i < hearts.size(); i++) {
+            ImageView heart = hearts.get(i);
+            if (i < lives) {
+                heart.setImage(fullHeartImage);
+            } else {
+                heart.setImage(emptyHeartImage);
+            }
         }
     }
 
