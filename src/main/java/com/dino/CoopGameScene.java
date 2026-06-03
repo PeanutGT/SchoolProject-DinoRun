@@ -636,6 +636,11 @@ public class CoopGameScene {
         bossHasAppeared = false;
         boss = new Boss(root, activeGameTime, true);
 
+        // 清理畫面上殘留的障礙物 (將其移動至螢幕左側外)
+        for (ObstacleSlot obstacle : obstacles) {
+            obstacle.reset(-200, score, groundY);
+        }
+
         screenFlash.setFill(Color.rgb(255, 0, 0, 0.5));
         screenFlash.setVisible(true);
         screenFlashStartTime = activeGameTime;
@@ -1101,10 +1106,12 @@ public class CoopGameScene {
     }
 
     private void resetAllObstacles() {
-        double startX = 850;
+        double minDistance = GameConfig.OBSTACLE_MIN_DISTANCE_BASE + speed * GameConfig.OBSTACLE_DISTANCE_SPEED_RATIO;
+        double startX = score == 0 ? 850 : GameConfig.SCREEN_WIDTH + minDistance;
         for (ObstacleSlot obstacle : obstacles) {
             obstacle.reset(startX, score, groundY);
-            startX += 300;
+            double randomDistance = Math.random() * GameConfig.OBSTACLE_MAX_RANDOM_DISTANCE;
+            startX += minDistance + randomDistance;
         }
     }
 
