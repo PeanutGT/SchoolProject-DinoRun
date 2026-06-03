@@ -1,4 +1,4 @@
-coins=225
+coins=340
 livesLevel=0
 magnetLevel=0
 multiplierLevel=0
@@ -11,5 +11,5 @@ marioUnlocked=false
 luigiUnlocked=false
 kirbyUnlocked=false
 lucarioUnlocked=false
-sonicUnlocked=false
-steveUnlocked=false
+sonicUnlocked=true
+steveUnlocked=true

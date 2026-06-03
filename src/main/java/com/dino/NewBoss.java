@@ -40,7 +40,7 @@ public class NewBoss extends Boss {
     // Positions
     private final double X_START = screenWidth - 150;
     private final double Y_GROUND = groundY - height;
-    private final double Y_MID = groundY - height - 40;
+    private final double Y_MID = groundY - height - 30;
 
     public NewBoss(Pane root, long activeGameTime, boolean isCoop) {
         // Hollow Knight: width=100 (拉寬), height=90, HP=120
