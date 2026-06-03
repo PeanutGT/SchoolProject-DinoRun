@@ -522,7 +522,7 @@ public class GameScene {
             // 快速自轉
             boomerangView.setRotate(boomerangView.getRotate() + dtSeconds * 720.0);
 
-            double duration = 0.5;
+            double duration = 1;
             double outward = 0.25;
             double maxDist = boomerangMaxDist;
 

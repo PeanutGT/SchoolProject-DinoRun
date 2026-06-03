@@ -29,7 +29,7 @@ public class GameConfig {
     public static final double BOSS_SHOCKWAVE_SPEED = 4 * 60;
 
     // 技能與道具設定
-    public static final double SWORD_ATTACK_RANGE = 400;
+    public static final double SWORD_ATTACK_RANGE = 600;
     public static final int OBSTACLE_CLEAR_SCORE = 50;
     public static final int MILK_SCORE_BONUS = 500;
     public static final long MILK_FOG_DURATION_MS = 5000;
