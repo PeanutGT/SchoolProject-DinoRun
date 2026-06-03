@@ -61,6 +61,13 @@ public class Dino {
     private boolean isGhost = false;
     private boolean hasGoldenApple = false;
 
+    private Image wingImage1;
+    private Image wingImage2;
+    private boolean doubleJumpUnlocked = false;
+    private boolean canDoubleJump = false;
+    private boolean doubleJumping = false;
+    private int wingFrameCounter = 0;
+
     public Dino(double x) {
         this(x, GameConfig.GROUND_Y);
     }
@@ -89,13 +96,17 @@ public class Dino {
         hintBubble.setLayoutY(-30);
         hintBubble.setVisible(false);
 
+        wingImage1 = ResourceManager.getImage("wing1.jpg");
+        wingImage2 = ResourceManager.getImage("wing2.jpg");
+
         group = new Group(imageView, hitBox, hintBubble);
         group.setLayoutX(x);
         group.setLayoutY(getStandGroundPosition());
 
         this.maxLives = 3 + SaveManager.getLivesBonus();
         this.lives = this.maxLives;
-        this.extraJumps = SaveManager.getExtraJumps();
+        this.extraJumps = 0; // Starts at 0, only from enchanted book
+        this.doubleJumpUnlocked = SaveManager.getExtraJumpsLevel() > 0;
     }
 
     public void showHint(String text) {
@@ -356,13 +367,31 @@ public class Dino {
             onGround = false;
             jumpAnimating = jumpImages.length > 1;
             imageView.setImage(jumpImage);
+            canDoubleJump = doubleJumpUnlocked;
+            doubleJumping = false;
             return true;
-        } else if (!onGround && !crouching && extraJumps > 0) {
-            velocityY = GameConfig.JUMP_VELOCITY;
-            jumpAnimating = jumpImages.length > 1;
-            imageView.setImage(jumpImage);
-            extraJumps--;
-            return true;
+        } else if (!onGround && !crouching) {
+            if (canDoubleJump) {
+                velocityY = GameConfig.JUMP_VELOCITY;
+                
+                // 二段跳時直接用二段跳圖檔(含有恐龍與翅膀)替換主圖檔，並保持比例防失真
+                imageView.setPreserveRatio(true);
+                imageView.setFitWidth(standWidth * 1.3);
+                imageView.setFitHeight(standHeight * 1.3);
+                imageView.setImage(wingImage1);
+                
+                jumpAnimating = false; // 二段跳期間只播振翅動畫
+                canDoubleJump = false;
+                doubleJumping = true;
+                wingFrameCounter = 0;
+                return true;
+            } else if (extraJumps > 0) {
+                velocityY = GameConfig.JUMP_VELOCITY;
+                jumpAnimating = jumpImages.length > 1;
+                imageView.setImage(jumpImage);
+                extraJumps--;
+                return true;
+            }
         }
         return false;
     }
@@ -506,10 +535,14 @@ public class Dino {
         crouching = false;
         jumpAnimating = false;
         downPressed = false;
-        extraJumps = SaveManager.getExtraJumps();
+        extraJumps = 0;
+        doubleJumpUnlocked = SaveManager.getExtraJumpsLevel() > 0;
+        canDoubleJump = false;
+        doubleJumping = false;
 
         imageView.setFitWidth(standWidth);
         imageView.setFitHeight(standHeight);
+        imageView.setPreserveRatio(false);
         imageView.setImage(runImage1);
 
         hitBox.setX(8);
@@ -534,13 +567,28 @@ public class Dino {
         }
         
         updateJump(dtSeconds);
-        updateJumpAnimation();
-        if (crouching) {
-            updateDuckAnimation();
+        if (doubleJumping) {
+            updateDoubleJumpAnimation();
         } else {
-            updateRunAnimation();
+            updateJumpAnimation();
+            if (crouching) {
+                updateDuckAnimation();
+            } else {
+                updateRunAnimation();
+            }
         }
         updateInvincible(activeGameTime);
+    }
+
+    private void updateDoubleJumpAnimation() {
+        wingFrameCounter++;
+        if (wingFrameCounter % 6 == 0) {
+            if ((wingFrameCounter / 6) % 2 == 0) {
+                imageView.setImage(wingImage1);
+            } else {
+                imageView.setImage(wingImage2);
+            }
+        }
     }
 
     private void updateJump(double dtSeconds) {
@@ -564,6 +612,10 @@ public class Dino {
             if (group.getLayoutY() >= getStandGroundPosition()) {
                 velocityY = 0;
                 onGround = true;
+                doubleJumping = false;
+                imageView.setPreserveRatio(false);
+                imageView.setFitWidth(standWidth);
+                imageView.setFitHeight(standHeight);
 
                 if (downPressed) {
                     crouch();
@@ -572,7 +624,7 @@ public class Dino {
                     jumpAnimating = false;
                     imageView.setImage(runImage1);
                 }
-            } else if (!jumpAnimating && velocityY > 0) {
+            } else if (!jumpAnimating && !doubleJumping && velocityY > 0) {
                 imageView.setImage(fallImage);
             }
         }

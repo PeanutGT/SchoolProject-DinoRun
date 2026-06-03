@@ -20,7 +20,7 @@ public class GameConfig {
 
     // Boss 參數設定 (單人)
     public static final int BOSS_TRIGGER_SCORE = 1000;
-    public static final int BOSS_INTERVAL_SCORE = 5000;
+    public static final int BOSS_INTERVAL_SCORE = 1000;
     public static final int BOSS_HP = 100;
     public static final long BOSS_SURVIVAL_TIME_MS = 100000;
     public static final long BOSS_RETREAT_GRACE_PERIOD_MS = 2000;
@@ -30,8 +30,8 @@ public class GameConfig {
     public static final double BOSS_SHOCKWAVE_SPEED = 4 * 60;
 
     // Boss 參數設定 (雙人合作)
-    public static final int BOSS_TRIGGER_SCORE_COOP = 2000;
-    public static final int BOSS_INTERVAL_SCORE_COOP = 7500;
+    public static final int BOSS_TRIGGER_SCORE_COOP = 1000;
+    public static final int BOSS_INTERVAL_SCORE_COOP = 1000;
     public static final int BOSS_HP_COOP = 200;
     public static final long BOSS_SURVIVAL_TIME_MS_COOP = 100000;
     public static final long BOSS_RETREAT_GRACE_PERIOD_MS_COOP = 3000;
