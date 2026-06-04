@@ -34,7 +34,7 @@ public class GameConfig {
     // Boss 參數設定 (雙人合作)
     public static final int BOSS_TRIGGER_SCORE_COOP = 1000;
     public static final int BOSS_INTERVAL_SCORE_COOP = 2500;
-    public static final int BOSS_HP_COOP = 200;
+    public static final int BOSS_HP_COOP = 120;
     public static final long BOSS_SURVIVAL_TIME_MS_COOP = 100000;
     public static final long BOSS_RETREAT_GRACE_PERIOD_MS_COOP = 3000;
     public static final double BOSS_SLAM_JUMP_VELOCITY_COOP = -9 * 60;
@@ -44,7 +44,7 @@ public class GameConfig {
 
     // New Boss (空洞騎士) 參數設定
     public static final int NEW_BOSS_HP = 120;
-    public static final int NEW_BOSS_HP_COOP = 240;
+    public static final int NEW_BOSS_HP_COOP = 150;
     public static final double NEW_BOSS_DASH_SPEED = 1000.0;
     public static final long NEW_BOSS_IDLE_DURATION_MS = 2000;
     public static final long NEW_BOSS_SHIFT_DURATION_MS = 500;
