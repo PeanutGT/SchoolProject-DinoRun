@@ -1011,6 +1011,11 @@ public class GameScene {
                     if (!bossPhase) {
                         triggerBossPhase();
                     }
+                } else if (e.getCode() == KeyCode.F6) {
+                    // 秒殺 Boss
+                    if (bossPhase && boss != null) {
+                        boss.takeDamage(99999);
+                    }
                 }
             }
         });

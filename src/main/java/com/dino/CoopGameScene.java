@@ -994,6 +994,16 @@ public class CoopGameScene {
                     distance += 100 * 50;
                 } else if (e.getCode() == KeyCode.F3) {
                     distance = 950 * 50;
+                } else if (e.getCode() == KeyCode.F5) {
+                    // 強制召喚 Boss
+                    if (!bossPhase) {
+                        triggerBossPhase();
+                    }
+                } else if (e.getCode() == KeyCode.F6) {
+                    // 秒殺 Boss
+                    if (bossPhase && boss != null) {
+                        boss.takeDamage(99999);
+                    }
                 }
             }
         });
