@@ -57,9 +57,16 @@ public class Dino {
     private boolean devInvincible = false;
     private long invincibleStartTime = 0;
     private final long invincibleDuration = 2000;
-    
+
     private boolean isGhost = false;
     private boolean hasGoldenApple = false;
+
+    private Image wingImage1;
+    private Image wingImage2;
+    private boolean doubleJumpUnlocked = false;
+    private boolean canDoubleJump = false;
+    private boolean doubleJumping = false;
+    private int wingFrameCounter = 0;
 
     public Dino(double x) {
         this(x, GameConfig.GROUND_Y);
@@ -84,10 +91,14 @@ public class Dino {
         hitBox.setVisible(false);
 
         hintBubble = new Label();
-        hintBubble.setStyle("-fx-background-color: black; -fx-text-fill: white; -fx-border-color: white; -fx-border-width: 2; -fx-font-family: 'Courier New', monospace; -fx-padding: 3; -fx-font-weight: bold;");
+        hintBubble.setStyle(
+                "-fx-background-color: black; -fx-text-fill: white; -fx-border-color: white; -fx-border-width: 2; -fx-font-family: 'Courier New', monospace; -fx-padding: 3; -fx-font-weight: bold;");
         hintBubble.setLayoutX(30);
         hintBubble.setLayoutY(-30);
         hintBubble.setVisible(false);
+
+        wingImage1 = ResourceManager.getImage("wing1.jpg");
+        wingImage2 = ResourceManager.getImage("wing2.jpg");
 
         group = new Group(imageView, hitBox, hintBubble);
         group.setLayoutX(x);
@@ -95,13 +106,14 @@ public class Dino {
 
         this.maxLives = 3 + SaveManager.getLivesBonus();
         this.lives = this.maxLives;
-        this.extraJumps = SaveManager.getExtraJumps();
+        this.extraJumps = SaveManager.getExtraJumps(); // Starts with extra jumps from shop
+        this.doubleJumpUnlocked = false; // Disable permanent double jump
     }
 
     public void showHint(String text) {
         hintBubble.setText(text);
         hintBubble.setVisible(true);
-        
+
         if (hintTimer != null) {
             hintTimer.stop();
         }
@@ -126,7 +138,7 @@ public class Dino {
             duckHitBoxHeight = 16;
             dinoGroundOffset = 5;
 
-            runImages = new Image[]{
+            runImages = new Image[] {
                     ResourceManager.getImage("mario_walk1.png"),
                     ResourceManager.getImage("mario_walk2.png"),
                     ResourceManager.getImage("mario_walk3.png"),
@@ -134,7 +146,7 @@ public class Dino {
                     ResourceManager.getImage("mario_walk5.png"),
                     ResourceManager.getImage("mario_walk6.png")
             };
-            jumpImages = new Image[]{
+            jumpImages = new Image[] {
                     ResourceManager.getImage("mario_jump1.png"),
                     ResourceManager.getImage("mario_jump2.png"),
                     ResourceManager.getImage("mario_jump3.png")
@@ -155,7 +167,7 @@ public class Dino {
             duckHitBoxHeight = 16;
             dinoGroundOffset = 5;
 
-            runImages = new Image[]{
+            runImages = new Image[] {
                     ResourceManager.getImage("luigi_run1.png"),
                     ResourceManager.getImage("luigi_run2.png"),
                     ResourceManager.getImage("luigi_run3.png"),
@@ -163,7 +175,7 @@ public class Dino {
                     ResourceManager.getImage("luigi_run5.png"),
                     ResourceManager.getImage("luigi_run6.png")
             };
-            jumpImages = new Image[]{
+            jumpImages = new Image[] {
                     ResourceManager.getImage("luigi_jump1.png"),
                     ResourceManager.getImage("luigi_jump2.png")
             };
@@ -183,13 +195,13 @@ public class Dino {
             duckHitBoxHeight = 9;
             dinoGroundOffset = 5;
 
-            runImages = new Image[]{
+            runImages = new Image[] {
                     ResourceManager.getImage("kirby_run1.png"),
                     ResourceManager.getImage("kirby_run2.png"),
                     ResourceManager.getImage("kirby_run3.png"),
                     ResourceManager.getImage("kirby_run4.png")
             };
-            jumpImages = new Image[]{
+            jumpImages = new Image[] {
                     ResourceManager.getImage("kirby_jump1.png"),
                     ResourceManager.getImage("kirby_jump2.png"),
                     ResourceManager.getImage("kirby_jump3.png"),
@@ -217,7 +229,7 @@ public class Dino {
             duckHitBoxHeight = 17;
             dinoGroundOffset = 5;
 
-            runImages = new Image[]{
+            runImages = new Image[] {
                     ResourceManager.getImage("lucario_run1.png"),
                     ResourceManager.getImage("lucario_run2.png"),
                     ResourceManager.getImage("lucario_run3.png"),
@@ -225,7 +237,7 @@ public class Dino {
                     ResourceManager.getImage("lucario_run5.png"),
                     ResourceManager.getImage("lucario_run6.png")
             };
-            jumpImages = new Image[]{
+            jumpImages = new Image[] {
                     ResourceManager.getImage("lucario_jump1.png")
             };
             jumpImage = jumpImages[0];
@@ -244,13 +256,13 @@ public class Dino {
             duckHitBoxHeight = duckHeight - 12;
             dinoGroundOffset = 5;
 
-            runImages = new Image[]{
+            runImages = new Image[] {
                     ResourceManager.getImage("sonic_run1.png"),
                     ResourceManager.getImage("sonic_run2.png"),
                     ResourceManager.getImage("sonic_run3.png"),
                     ResourceManager.getImage("sonic_run4.png")
             };
-            jumpImages = new Image[]{
+            jumpImages = new Image[] {
                     ResourceManager.getImage("sonic_jump1.png"),
                     ResourceManager.getImage("sonic_jump2.png"),
                     ResourceManager.getImage("sonic_jump3.png"),
@@ -272,7 +284,7 @@ public class Dino {
             duckHitBoxHeight = duckHeight - 12;
             dinoGroundOffset = 5;
 
-            runImages = new Image[]{
+            runImages = new Image[] {
                     ResourceManager.getImage("steve_run1.png"),
                     ResourceManager.getImage("steve_run2.png"),
                     ResourceManager.getImage("steve_run3.png"),
@@ -280,7 +292,7 @@ public class Dino {
             };
             jumpImage = ResourceManager.getImage("steve_jump.png");
             fallImage = ResourceManager.getImage("steve_fall.png");
-            jumpImages = new Image[]{jumpImage};
+            jumpImages = new Image[] { jumpImage };
             duckImage1 = ResourceManager.getImage("steve_fall.png");
             duckImage2 = duckImage1;
             deadImage = ResourceManager.getImage("steve_fall.png");
@@ -295,13 +307,13 @@ public class Dino {
             duckHitBoxHeight = duckHeight - 12;
             dinoGroundOffset = 5;
 
-            runImages = new Image[]{
+            runImages = new Image[] {
                     ResourceManager.getImage("dino_run1.png"),
                     ResourceManager.getImage("dino_run2.png")
             };
             jumpImage = ResourceManager.getImage("dino_jump.png");
             fallImage = jumpImage;
-            jumpImages = new Image[]{jumpImage};
+            jumpImages = new Image[] { jumpImage };
             duckImage1 = ResourceManager.getImage("dino_duck1.png");
             duckImage2 = ResourceManager.getImage("dino_duck2.png");
             deadImage = ResourceManager.getImage("dino_dead.png");
@@ -349,20 +361,39 @@ public class Dino {
     }
 
     public boolean jump() {
-        if (isDead() || isGhost) return false;
-        
+        if (isDead() || isGhost)
+            return false;
+
         if (onGround && !crouching) {
             velocityY = GameConfig.JUMP_VELOCITY;
             onGround = false;
             jumpAnimating = jumpImages.length > 1;
             imageView.setImage(jumpImage);
+            canDoubleJump = doubleJumpUnlocked;
+            doubleJumping = false;
             return true;
-        } else if (!onGround && !crouching && extraJumps > 0) {
-            velocityY = GameConfig.JUMP_VELOCITY;
-            jumpAnimating = jumpImages.length > 1;
-            imageView.setImage(jumpImage);
-            extraJumps--;
-            return true;
+        } else if (!onGround && !crouching) {
+            if (canDoubleJump) {
+                velocityY = GameConfig.JUMP_VELOCITY;
+
+                // 二段跳時直接用二段跳圖檔(含有恐龍與翅膀)替換主圖檔，使用固定大小防止因圖片比例不同產生忽大忽小的抖動
+                imageView.setPreserveRatio(false);
+                imageView.setFitWidth(standWidth * 1.1);
+                imageView.setFitHeight(standHeight * 1.1);
+                imageView.setImage(wingImage1);
+
+                jumpAnimating = false; // 二段跳期間只播振翅動畫
+                canDoubleJump = false;
+                doubleJumping = true;
+                wingFrameCounter = 0;
+                return true;
+            } else if (extraJumps > 0) {
+                velocityY = GameConfig.JUMP_VELOCITY;
+                jumpAnimating = jumpImages.length > 1;
+                imageView.setImage(jumpImage);
+                extraJumps--;
+                return true;
+            }
         }
         return false;
     }
@@ -460,12 +491,21 @@ public class Dino {
         return onGround;
     }
 
-    public boolean isDead() { return lives <= 0; }
-    
-    public boolean isGhost() { return isGhost; }
-    
-    public boolean getHasGoldenApple() { return hasGoldenApple; }
-    public void setHasGoldenApple(boolean b) { this.hasGoldenApple = b; }
+    public boolean isDead() {
+        return lives <= 0;
+    }
+
+    public boolean isGhost() {
+        return isGhost;
+    }
+
+    public boolean getHasGoldenApple() {
+        return hasGoldenApple;
+    }
+
+    public void setHasGoldenApple(boolean b) {
+        this.hasGoldenApple = b;
+    }
 
     public void becomeGhost() {
         isGhost = true;
@@ -473,11 +513,12 @@ public class Dino {
         imageView.setFitHeight(standHeight);
         imageView.setImage(deadImage);
         group.setOpacity(0.5);
-        // Slightly shift Y to visually indicate floating, we'll maintain this in updateJump
+        // Slightly shift Y to visually indicate floating, we'll maintain this in
+        // updateJump
         group.setLayoutY(groundY - 120);
         hitBox.setVisible(false); // Can hide hitBox or shrink it
     }
-    
+
     public void revive(long activeGameTime) {
         isGhost = false;
         lives = 1;
@@ -506,10 +547,14 @@ public class Dino {
         crouching = false;
         jumpAnimating = false;
         downPressed = false;
-        extraJumps = SaveManager.getExtraJumps();
+        extraJumps = SaveManager.getExtraJumps(); // Reset to starting extra jumps
+        doubleJumpUnlocked = false; // Disable permanent double jump
+        canDoubleJump = false;
+        doubleJumping = false;
 
         imageView.setFitWidth(standWidth);
         imageView.setFitHeight(standHeight);
+        imageView.setPreserveRatio(false);
         imageView.setImage(runImage1);
 
         hitBox.setX(8);
@@ -532,15 +577,30 @@ public class Dino {
             // Ignore animation updates while ghost
             return;
         }
-        
+
         updateJump(dtSeconds);
-        updateJumpAnimation();
-        if (crouching) {
-            updateDuckAnimation();
+        if (doubleJumping) {
+            updateDoubleJumpAnimation();
         } else {
-            updateRunAnimation();
+            updateJumpAnimation();
+            if (crouching) {
+                updateDuckAnimation();
+            } else {
+                updateRunAnimation();
+            }
         }
         updateInvincible(activeGameTime);
+    }
+
+    private void updateDoubleJumpAnimation() {
+        wingFrameCounter++;
+        if (wingFrameCounter % 6 == 0) {
+            if ((wingFrameCounter / 6) % 2 == 0) {
+                imageView.setImage(wingImage1);
+            } else {
+                imageView.setImage(wingImage2);
+            }
+        }
     }
 
     private void updateJump(double dtSeconds) {
@@ -564,6 +624,10 @@ public class Dino {
             if (group.getLayoutY() >= getStandGroundPosition()) {
                 velocityY = 0;
                 onGround = true;
+                doubleJumping = false;
+                imageView.setPreserveRatio(false);
+                imageView.setFitWidth(standWidth);
+                imageView.setFitHeight(standHeight);
 
                 if (downPressed) {
                     crouch();
@@ -572,14 +636,15 @@ public class Dino {
                     jumpAnimating = false;
                     imageView.setImage(runImage1);
                 }
-            } else if (!jumpAnimating && velocityY > 0) {
+            } else if (!jumpAnimating && !doubleJumping && velocityY > 0) {
                 imageView.setImage(fallImage);
             }
         }
     }
 
     private void updateRunAnimation() {
-        if (!onGround) return;
+        if (!onGround)
+            return;
         animationCounter++;
         if (animationCounter % 7 == 0) {
             int index = (animationCounter / 7) % runImages.length;
@@ -588,7 +653,8 @@ public class Dino {
     }
 
     private void updateJumpAnimation() {
-        if (!jumpAnimating || onGround) return;
+        if (!jumpAnimating || onGround)
+            return;
         animationCounter++;
         if (animationCounter % 6 == 0) {
             int index = (animationCounter / 6) % jumpImages.length;
@@ -597,7 +663,8 @@ public class Dino {
     }
 
     private void updateDuckAnimation() {
-        if (!onGround) return;
+        if (!onGround)
+            return;
         animationCounter++;
         if (animationCounter % 13 == 0) {
             if (imageView.getImage() == duckImage1) {
@@ -608,8 +675,19 @@ public class Dino {
         }
     }
 
-    private double getStandGroundPosition() { return groundY - standHeight + dinoGroundOffset; }
-    private double getDuckGroundPosition() { return groundY - duckHeight + dinoGroundOffset; }
-    public Group getView() { return group; }
-    public Rectangle getHitBox() { return hitBox; }
+    private double getStandGroundPosition() {
+        return groundY - standHeight + dinoGroundOffset;
+    }
+
+    private double getDuckGroundPosition() {
+        return groundY - duckHeight + dinoGroundOffset;
+    }
+
+    public Group getView() {
+        return group;
+    }
+
+    public Rectangle getHitBox() {
+        return hitBox;
+    }
 }

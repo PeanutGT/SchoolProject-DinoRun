@@ -11,59 +11,39 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.Rectangle;
 
-public class Boss {
-    public enum State {
-        IDLE, PRE_RANGED, RANGED, PRE_SLAM, SLAM, PRE_S_RANGED, S_RANGED
-    }
+public abstract class Boss {
+    protected Group group;
+    protected ImageView visual;
+    protected Rectangle hitBox;
 
-    private Group group;
-    private ImageView visual;
-    private Image[] walkFrames;
-    private Rectangle hitBox;
+    protected int hp;
+    protected int maxHp;
+    protected long startTime;
+    protected long stateTimer;
 
-    private int hp;
-    private long startTime;
-    private long stateTimer;
-    private State currentState = State.IDLE;
+    protected double x, y;
+    protected final double screenWidth = GameConfig.SCREEN_WIDTH;
+    protected final double groundY = GameConfig.GROUND_Y;
 
-    private double x, y;
-    private final double screenWidth = GameConfig.SCREEN_WIDTH;
-    private final double groundY = GameConfig.GROUND_Y;
+    protected double width;
+    protected double height;
 
-    private final double width = 84;
-    private final double height = 81;
-    private final double startX = screenWidth - 150;
-    private final double startY = groundY - height;
+    protected Pane root;
+    protected List<BossProjectile> projectiles = new ArrayList<>();
+    protected boolean isCoop;
+    protected double velocityY = 0;
 
-    private Pane root;
-    private List<BossProjectile> projectiles = new ArrayList<>();
-
-    private double velocityY = 0;
-    private int walkFrameCounter = 0;
-    
-    private boolean isCoop;
-    private double slamJumpVelocity;
-    private double bulletSpeed;
-    private double shockwaveSpeed;
-    private long survivalTimeMs;
-
-    public Boss(Pane root, long activeGameTime, boolean isCoop) {
+    public Boss(Pane root, long activeGameTime, boolean isCoop, double width, double height, int maxHp) {
         this.isCoop = isCoop;
-        this.hp = isCoop ? GameConfig.BOSS_HP_COOP : GameConfig.BOSS_HP;
-        this.slamJumpVelocity = isCoop ? GameConfig.BOSS_SLAM_JUMP_VELOCITY_COOP : GameConfig.BOSS_SLAM_JUMP_VELOCITY;
-        this.bulletSpeed = isCoop ? GameConfig.BOSS_BULLET_SPEED_COOP : GameConfig.BOSS_BULLET_SPEED;
-        this.shockwaveSpeed = isCoop ? GameConfig.BOSS_SHOCKWAVE_SPEED_COOP : GameConfig.BOSS_SHOCKWAVE_SPEED;
-        this.survivalTimeMs = isCoop ? GameConfig.BOSS_SURVIVAL_TIME_MS_COOP : GameConfig.BOSS_SURVIVAL_TIME_MS;
+        this.maxHp = maxHp;
+        this.hp = maxHp;
         this.root = root;
-        this.x = startX;
-        this.y = startY;
+        this.width = width;
+        this.height = height;
+        this.x = screenWidth - 150;
+        this.y = groundY - height;
 
-        walkFrames = new Image[] {
-                ResourceManager.getImage("boss_bowser_walk1.png"),
-                ResourceManager.getImage("boss_bowser_walk2.png")
-        };
-
-        visual = new ImageView(walkFrames[0]);
+        visual = new ImageView();
         visual.setSmooth(false);
         visual.setFitWidth(width);
         visual.setFitHeight(height);
@@ -82,77 +62,12 @@ public class Boss {
         stateTimer = activeGameTime;
     }
 
+    public abstract String getName();
+
+    protected abstract void updateBoss(double speed, long activeGameTime, double dtSeconds);
+
     public void update(double speed, long activeGameTime, double dtSeconds) {
-        long now = activeGameTime;
-        updateWalkAnimation();
-
-        // Update Boss AI State Machine
-        switch (currentState) {
-            case IDLE:
-                x = startX;
-                y = startY;
-
-                if (now - stateTimer > getObstacleLikeAttackDelay(speed)) {
-                    pickRandomAttack(activeGameTime);
-                }
-                break;
-            case PRE_RANGED:
-                visual.setOpacity(0.75);
-                if (now - stateTimer > 1000) {
-                    currentState = State.RANGED;
-                    stateTimer = now;
-                    visual.setOpacity(1.0);
-                    fireBullet();
-                }
-                break;
-            case RANGED:
-                if (now - stateTimer > 500) {
-                    currentState = State.IDLE;
-                    stateTimer = now;
-                    visual.setOpacity(1.0);
-                }
-                break;
-            case PRE_SLAM:
-                visual.setOpacity(0.75);
-                if (now - stateTimer > 1000) {
-                    currentState = State.SLAM;
-                    stateTimer = now;
-                    visual.setOpacity(1.0);
-                    velocityY = slamJumpVelocity; // 往上跳躍躍
-                }
-                break;
-            case SLAM:
-                y += velocityY * dtSeconds;
-                velocityY += GameConfig.GRAVITY * dtSeconds;
-                if (y >= startY) {
-                    y = startY;
-                    velocityY = 0;
-                    fireShockwave();
-                    currentState = State.IDLE;
-                    stateTimer = now;
-                    visual.setOpacity(1.0);
-                }
-                break;
-            case PRE_S_RANGED:
-                visual.setOpacity(0.75);
-                if (now - stateTimer > 1000) {
-                    currentState = State.S_RANGED;
-                    stateTimer = now;
-                    visual.setOpacity(1.0);
-                    fireSFireball();
-                }
-                break;
-            case S_RANGED:
-                if (now - stateTimer > 500) {
-                    currentState = State.IDLE;
-                    stateTimer = now;
-                    visual.setOpacity(1.0);
-                }
-                break;
-        }
-
-        group.setLayoutX(x);
-        group.setLayoutY(y);
+        updateBoss(speed, activeGameTime, dtSeconds);
 
         // Update Projectiles
         Iterator<BossProjectile> it = projectiles.iterator();
@@ -164,77 +79,6 @@ public class Boss {
                 it.remove();
             }
         }
-    }
-
-    private void updateWalkAnimation() {
-        walkFrameCounter++;
-        if (walkFrameCounter % 12 == 0) {
-            int index = (walkFrameCounter / 12) % walkFrames.length;
-            visual.setImage(walkFrames[index]);
-        }
-    }
-
-    private long getObstacleLikeAttackDelay(double speed) {
-        double obstacleSpacing = 220 + speed * (28.0 / 60.0);
-        double framesUntilNextObstacle = obstacleSpacing / speed;
-        return Math.max(650, Math.round(framesUntilNextObstacle * 1000));
-    }
-
-    private void pickRandomAttack(long activeGameTime) {
-        double r = Math.random();
-        if (r < 0.40) {
-            currentState = State.PRE_RANGED;
-        } else if (r < 0.60) {
-            currentState = State.PRE_SLAM;
-        } else {
-            currentState = State.PRE_S_RANGED;
-        }
-        stateTimer = activeGameTime;
-    }
-
-    private void fireBullet() {
-        boolean high = Math.random() > 0.5;
-        double bulletY = high ? groundY - 80 : groundY - 30;
-        BossProjectile p = new BossProjectile(
-                x,
-                bulletY,
-                48,
-                48,
-                bulletSpeed,
-                new String[] { "boss_fireball_1.png", "boss_fireball_2.png", "boss_fireball_3.png",
-                        "boss_fireball_4.png" },
-                false);
-        projectiles.add(p);
-        root.getChildren().add(p.getView());
-    }
-
-    private void fireShockwave() {
-        // 地震波使用貼地直線型火焰
-        BossProjectile p = new BossProjectile(
-                x,
-                groundY - 30,
-                64,
-                24,
-                shockwaveSpeed,
-                new String[] { "boss_fireball_1.png", "boss_fireball_2.png" },
-                false);
-        projectiles.add(p);
-        root.getChildren().add(p.getView());
-    }
-
-    private void fireSFireball() {
-        // S型火球，從中空高度射出，以 110 px/s 的慢速進行上下 S 型漂移
-        double bulletY = groundY - 80;
-        BossProjectile p = new BossProjectile(
-                x,
-                bulletY,
-                64,
-                24,
-                110.0, // 大幅降低速度，讓正弦波波動極其清晰好躲避
-                new String[] { "boss_fire_1.png", "boss_fire_2.png" },
-                true);
-        projectiles.add(p);
-        root.getChildren().add(p.getView());
     }
 
     public boolean checkCollision(Bounds dinoBounds) {
@@ -251,6 +95,7 @@ public class Boss {
     }
 
     public boolean isDefeated(long activeGameTime) {
+        long survivalTimeMs = isCoop ? GameConfig.BOSS_SURVIVAL_TIME_MS_COOP : GameConfig.BOSS_SURVIVAL_TIME_MS;
         return hp <= 0 || (activeGameTime - startTime >= survivalTimeMs); // 存活滿指定時間或HP歸零則撤退
     }
 
@@ -263,6 +108,10 @@ public class Boss {
 
     public int getHp() {
         return this.hp;
+    }
+
+    public int getMaxHp() {
+        return this.maxHp;
     }
 
     public double getX() {
@@ -281,8 +130,18 @@ public class Boss {
         return hitBox.localToScene(hitBox.getBoundsInLocal());
     }
 
+    // Factory method to spawn a random boss
+    public static Boss spawnRandomBoss(Pane root, long activeGameTime, boolean isCoop) {
+        double r = Math.random();
+        if (r < 0.5) {
+            return new BowserBoss(root, activeGameTime, isCoop);
+        } else {
+            return new NewBoss(root, activeGameTime, isCoop);
+        }
+    }
+
     // 內部類別：處理 Boss 產生的所有投射物 (子彈與震波)
-    class BossProjectile {
+    public class BossProjectile {
         private Group pGroup;
         private Rectangle pHitBox;
         private double pX, pY;

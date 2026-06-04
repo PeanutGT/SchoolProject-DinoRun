@@ -533,7 +533,7 @@ public class GameScene {
                 boomerangGroup.setLayoutX(curX);
                 boomerangGroup.setLayoutY(curY);
             } else if (boomerangTime < duration) {
-                double pct = (boomerangTime - outward) / outward;
+                double pct = (boomerangTime - outward) / (duration - outward);
                 double outX = boomerangStartX + maxDist;
                 double outY = boomerangStartY;
                 // 追蹤恐龍的當前座標，優雅回收到手
@@ -571,9 +571,9 @@ public class GameScene {
 
             // 更新 Boss 生命條 UI
             if (bossHealthBarContainer != null && bossHealthInnerBar != null && bossHealthLabel != null) {
-                double hpPct = (double) boss.getHp() / 100.0;
+                double hpPct = (double) boss.getHp() / (double) boss.getMaxHp();
                 bossHealthInnerBar.setWidth(296 * hpPct);
-                bossHealthLabel.setText("BOSS: Bowser (" + boss.getHp() + "/100)");
+                bossHealthLabel.setText("BOSS: " + boss.getName() + " (" + boss.getHp() + "/" + boss.getMaxHp() + ")");
             }
 
             if (boss.isDefeated(activeGameTime)) {
@@ -722,7 +722,7 @@ public class GameScene {
     private void triggerBossPhase() {
         bossIncoming = false;
         bossPhase = true;
-        boss = new Boss(root, activeGameTime, false);
+        boss = Boss.spawnRandomBoss(root, activeGameTime, false);
 
         // 清理畫面上殘留的障礙物 (將其移動至螢幕左側外)
         for (ObstacleSlot obstacle : obstacles) {
@@ -748,7 +748,7 @@ public class GameScene {
         bossHealthInnerBar.setY(2);
         bossHealthInnerBar.setFill(Color.RED);
 
-        bossHealthLabel = new Label("BOSS: Bowser (100/100)");
+        bossHealthLabel = new Label("BOSS: " + boss.getName() + " (" + boss.getHp() + "/" + boss.getMaxHp() + ")");
         bossHealthLabel.setFont(Font.font("Courier New", FontWeight.BOLD, 14));
         bossHealthLabel.setTextFill(Color.WHITE);
         bossHealthLabel.setLayoutY(-18);

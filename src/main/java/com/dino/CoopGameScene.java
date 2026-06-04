@@ -491,8 +491,8 @@ public class CoopGameScene {
         
         if (bossPhase && boss != null) {
             boss.update(speed, activeGameTime, dtSeconds);
-            bossHealthInnerBar.setWidth(296 * ((double) boss.getHp() / 100.0));
-            bossHealthLabel.setText("BOSS: Bowser (" + boss.getHp() + "/" + 100.0 + ")");
+            bossHealthInnerBar.setWidth(296 * ((double) boss.getHp() / boss.getMaxHp()));
+            bossHealthLabel.setText("BOSS: " + boss.getName() + " (" + boss.getHp() + "/" + boss.getMaxHp() + ")");
 
             if (!bossHasAppeared && boss.getX() < screenWidth - 100) {
                 bossHasAppeared = true;
@@ -634,7 +634,7 @@ public class CoopGameScene {
         bossIncoming = false;
         bossPhase = true;
         bossHasAppeared = false;
-        boss = new Boss(root, activeGameTime, true);
+        boss = Boss.spawnRandomBoss(root, activeGameTime, true);
 
         // 清理畫面上殘留的障礙物 (將其移動至螢幕左側外)
         for (ObstacleSlot obstacle : obstacles) {
@@ -659,7 +659,7 @@ public class CoopGameScene {
         bossHealthInnerBar.setY(2);
         bossHealthInnerBar.setFill(Color.RED);
 
-        bossHealthLabel = new Label("BOSS: Bowser (100/100)");
+        bossHealthLabel = new Label("BOSS: " + boss.getName() + " (" + boss.getHp() + "/" + boss.getMaxHp() + ")");
         bossHealthLabel.setFont(Font.font("Courier New", FontWeight.BOLD, 14));
         bossHealthLabel.setTextFill(Color.WHITE);
         bossHealthLabel.setLayoutY(-18);

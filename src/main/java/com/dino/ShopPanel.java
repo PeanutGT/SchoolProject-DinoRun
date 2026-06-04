@@ -106,15 +106,15 @@ public class ShopPanel extends VBox {
                 (lvl) -> SaveManager.setMultiplierLevel(lvl),
                 () -> "目前倍率: " + SaveManager.getCoinMultiplier() + "x");
 
-        // 4. 永久多段跳
+        // 4. 開局額外跳躍
         cardJumps = new UpgradeCard(
-                "永久空中多段跳",
-                "初始即可在空中多段跳躍，不需吃書",
-                new int[] { 30, 70 },
-                2,
+                "開局額外跳躍",
+                "開始遊戲時獲得額外跳躍次數（最多 3 次）",
+                new int[] { 50, 100, 150 },
+                3,
                 () -> SaveManager.getExtraJumpsLevel(),
                 (lvl) -> SaveManager.setExtraJumpsLevel(lvl),
-                () -> "目前空中跳躍: " + (1 + SaveManager.getExtraJumpsLevel()) + " 次");
+                () -> "目前開局額外跳躍: " + SaveManager.getExtraJumps() + " 次");
 
         // 6. 緩慢自動回血
         cardRegen = new UpgradeCard(
