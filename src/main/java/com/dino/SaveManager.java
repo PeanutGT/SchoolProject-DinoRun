@@ -4,25 +4,36 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 存檔管理員類別。
+ * 負責金幣數量、數值升級項目（生命加成、磁力半徑、金幣加倍、額外跳躍、自動回血、幸運方塊）
+ * 以及角色解鎖狀態的本機磁碟讀寫（檔案名稱為 savegame.txt），採用關鍵字等於數值的簡易 key-value 結構。
+ */
 public class SaveManager {
+    // 存檔檔案名稱
     private static final String FILE_NAME = "savegame.txt";
     
+    /**
+     * 動態定位可攜式路徑下的存檔檔案。
+     */
     private static File getSaveFile() {
         return new File(GameConfig.getBaseDirectory(), FILE_NAME);
     }
+
+    // 金幣與各基礎數值等級
     private static int coins = 0;
     private static int livesLevel = 0;
     private static int magnetLevel = 0;
     private static int multiplierLevel = 0;
     private static int extraJumpsLevel = 0;
     
-    // 新增的三個 100 元進階功能
-    private static int resurrectionCount = 0;
-    private static int regenLevel = 0;
-    private static int moreCoinsLevel = 0;
-    private static int questionBoxLevel = 0;
+    // 進階技能升級
+    private static int resurrectionCount = 0; // 一次性復活次數
+    private static int regenLevel = 0;         // 自動回血等級
+    private static int moreCoinsLevel = 0;     // 提高金幣頻率等級
+    private static int questionBoxLevel = 0;   // 幸運問號箱等級
 
-    // 角色解鎖狀態 (dino 預設解鎖，其餘初始為 false)
+    // 角色解鎖狀態 (dino 預設解鎖，其餘初始為未解鎖 false)
     private static boolean marioUnlocked = false;
     private static boolean luigiUnlocked = false;
     private static boolean kirbyUnlocked = false;
@@ -30,14 +41,17 @@ public class SaveManager {
     private static boolean sonicUnlocked = false;
     private static boolean steveUnlocked = false;
     
-    private static boolean loaded = false;
+    private static boolean loaded = false; // 是否已載入完畢，避免單局內重複讀碟
 
+    /**
+     * 同步載入本機存檔。若存檔不存在則初始化並儲存預設檔。
+     */
     public static synchronized void load() {
         if (loaded) return;
         
         File file = getSaveFile();
         if (!file.exists()) {
-            // 如果存檔不存在，就先給初始值並存檔
+            // 首次運行初始化數值並儲存
             coins = 0;
             livesLevel = 0;
             magnetLevel = 0;
@@ -59,6 +73,7 @@ public class SaveManager {
             return;
         }
 
+        // 以 BufferedReader 讀取文字存檔並以 "=" 分割鍵值
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             String line;
             while ((line = br.readLine()) != null) {
@@ -92,6 +107,9 @@ public class SaveManager {
         loaded = true;
     }
 
+    /**
+     * 同步儲存所有資料至本機。
+     */
     public static synchronized void save() {
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(getSaveFile()))) {
             bw.write("coins=" + coins); bw.newLine();
@@ -114,6 +132,7 @@ public class SaveManager {
         }
     }
 
+    // 金幣基本增刪檢測
     public static int getCoins() { load(); return coins; }
     public static void addCoins(int amount) { load(); coins += amount; save(); }
     public static boolean spendCoins(int amount) {
@@ -126,6 +145,7 @@ public class SaveManager {
         return false;
     }
 
+    // 各大升級項等級讀寫
     public static int getLivesLevel() { load(); return livesLevel; }
     public static void setLivesLevel(int lvl) { load(); livesLevel = lvl; save(); }
 
@@ -138,11 +158,12 @@ public class SaveManager {
     public static int getExtraJumpsLevel() { load(); return extraJumpsLevel; }
     public static void setExtraJumpsLevel(int lvl) { load(); extraJumpsLevel = lvl; save(); }
 
-    // 遊戲內實際的加成獲取方法
+    /** 每級 +1 滴血 */
     public static int getLivesBonus() {
-        return getLivesLevel(); // 每級 +1 生命
+        return getLivesLevel(); 
     }
 
+    /** 依磁鐵等級轉換為實際吸引半徑 */
     public static double getMagnetRadius() {
         switch (getMagnetLevel()) {
             case 1: return 100.0;
@@ -152,6 +173,7 @@ public class SaveManager {
         }
     }
 
+    /** 依金幣加倍等級轉換為實際收穫硬幣乘數 */
     public static int getCoinMultiplier() {
         switch (getMultiplierLevel()) {
             case 1: return 2;
@@ -161,35 +183,40 @@ public class SaveManager {
         }
     }
 
+    /** 依升級等級轉換為實際額外跳躍次數 */
     public static int getExtraJumps() {
-        return getExtraJumpsLevel(); // 每級 +1 跳躍次數
+        return getExtraJumpsLevel();
     }
 
-    // 1. 一次性復活功能 (100 元)
+    // 1. 一次性復活次數 (100 元)
     public static int getResurrectionCount() { load(); return resurrectionCount; }
     public static void setResurrectionCount(int val) { load(); resurrectionCount = val; save(); }
     public static boolean hasResurrection() { return getResurrectionCount() > 0; }
     public static void useResurrection() { setResurrectionCount(0); }
 
-    // 2. 緩慢自動回血 (100 元)
+    // 2. 緩慢自動回血等級 (100 元)
     public static int getRegenLevel() { load(); return regenLevel; }
     public static void setRegenLevel(int val) { load(); regenLevel = val; save(); }
     public static boolean hasRegen() { return getRegenLevel() > 0; }
 
-    // 3. 提高金幣頻率 (100 元)
+    // 3. 提高金幣頻率等級 (100 元)
     public static int getMoreCoinsLevel() { load(); return moreCoinsLevel; }
     public static void setMoreCoinsLevel(int val) { load(); moreCoinsLevel = val; save(); }
     public static boolean hasMoreCoins() { return getMoreCoinsLevel() > 0; }
 
-    // 4. 問號箱強化
+    // 4. 幸運問號箱等級
     public static int getQuestionBoxLevel() { load(); return questionBoxLevel; }
     public static void setQuestionBoxLevel(int val) { load(); questionBoxLevel = val; save(); }
 
-    // 角色解鎖系統
+    /**
+     * 檢查指定角色代號是否解鎖。
+     * @param charId 角色代號
+     * @return 是否已解鎖
+     */
     public static boolean isCharacterUnlocked(String charId) {
         load();
         switch (charId) {
-            case "dino":    return true;  // Dino 預設永遠解鎖
+            case "dino":    return true;  // Dino 預設永遠解鎖，不可被鎖定
             case "mario":   return marioUnlocked;
             case "luigi":   return luigiUnlocked;
             case "kirby":   return kirbyUnlocked;
@@ -200,6 +227,9 @@ public class SaveManager {
         }
     }
 
+    /**
+     * 解鎖特定角色。
+     */
     public static void unlockCharacter(String charId) {
         load();
         switch (charId) {
@@ -213,7 +243,7 @@ public class SaveManager {
         save();
     }
 
-    /** 回傳除了 dino 之外已解鎖的角色數量（0 ~ 6）*/
+    /** 回傳除了 dino 之外已解鎖的角色總數（0 ~ 6）*/
     public static int getUnlockedCharactersCount() {
         load();
         int count = 0;
@@ -227,8 +257,7 @@ public class SaveManager {
     }
 
     /**
-     * 隨機解鎖一位尚未解鎖的角色，並返回其 ID。
-     * 若所有角色皆已解鎖則返回 null。
+     * 隨機抽取解鎖一位尚未擁有的角色，並返回其名稱；若全數解鎖，則回傳 null。
      */
     public static String unlockRandomCharacter() {
         load();
