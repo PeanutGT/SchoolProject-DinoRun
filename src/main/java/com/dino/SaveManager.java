@@ -5,8 +5,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SaveManager {
-    private static final String FILE_PATH = "savegame.txt";
+    private static final String FILE_NAME = "savegame.txt";
     
+    private static File getSaveFile() {
+        return new File(GameConfig.getBaseDirectory(), FILE_NAME);
+    }
     private static int coins = 0;
     private static int livesLevel = 0;
     private static int magnetLevel = 0;
@@ -32,7 +35,7 @@ public class SaveManager {
     public static synchronized void load() {
         if (loaded) return;
         
-        File file = new File(FILE_PATH);
+        File file = getSaveFile();
         if (!file.exists()) {
             // 如果存檔不存在，就先給初始值並存檔
             coins = 0;
@@ -90,7 +93,7 @@ public class SaveManager {
     }
 
     public static synchronized void save() {
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILE_PATH))) {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(getSaveFile()))) {
             bw.write("coins=" + coins); bw.newLine();
             bw.write("livesLevel=" + livesLevel); bw.newLine();
             bw.write("magnetLevel=" + magnetLevel); bw.newLine();

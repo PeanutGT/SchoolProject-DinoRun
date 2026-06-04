@@ -1,5 +1,7 @@
 package com.dino;
 
+import java.io.File;
+
 public class GameConfig {
     // 視窗設定
     public static final double SCREEN_WIDTH = 1000;
@@ -19,7 +21,7 @@ public class GameConfig {
     public static boolean devModeEnabled = false;
 
     // Boss 參數設定 (單人)
-    public static final int BOSS_TRIGGER_SCORE = 2000;
+    public static final int BOSS_TRIGGER_SCORE = 1000;
     public static final int BOSS_INTERVAL_SCORE = 2000;
     public static final int BOSS_HP = 100;
     public static final long BOSS_SURVIVAL_TIME_MS = 100000;
@@ -30,7 +32,7 @@ public class GameConfig {
     public static final double BOSS_SHOCKWAVE_SPEED = 6 * 60;
 
     // Boss 參數設定 (雙人合作)
-    public static final int BOSS_TRIGGER_SCORE_COOP = 2500;
+    public static final int BOSS_TRIGGER_SCORE_COOP = 1000;
     public static final int BOSS_INTERVAL_SCORE_COOP = 2500;
     public static final int BOSS_HP_COOP = 200;
     public static final long BOSS_SURVIVAL_TIME_MS_COOP = 100000;
@@ -85,4 +87,26 @@ public class GameConfig {
 
     public static double getScreenWidth() { return SCREEN_WIDTH; }
     public static double getScreenHeight() { return SCREEN_HEIGHT; }
+
+    /**
+     * 動態獲取當前執行檔所在的根目錄 (Portable Mode)
+     */
+    public static File getBaseDirectory() {
+        try {
+            File file = new File(GameConfig.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+            if (file.isFile()) {
+                // 如果是 jar 或 exe 檔，回傳該檔案所在的目錄
+                return file.getParentFile();
+            } else {
+                // 如果是 IDE 執行 (指向 target/classes)，退回專案根目錄 (Dino)
+                File parent = file.getParentFile();
+                if (parent != null && parent.getName().equals("target")) {
+                    return parent.getParentFile();
+                }
+                return file;
+            }
+        } catch (Exception e) {
+            return new File(System.getProperty("user.dir"));
+        }
+    }
 }

@@ -4,8 +4,8 @@ import java.io.*;
 import java.util.*;
 
 public class LeaderboardManager {
-    private static final String FILE_PATH = "leaderboard.txt";
-    private static final String FILE_PATH_COOP = "leaderboard_coop.txt";
+    private static final String FILE_NAME = "leaderboard.txt";
+    private static final String FILE_NAME_COOP = "leaderboard_coop.txt";
     private static final int MAX_SCORES = 50;
 
     public static class ScoreEntry implements Comparable<ScoreEntry> {
@@ -27,13 +27,13 @@ public class LeaderboardManager {
         }
     }
 
-    private static String getFilePath(boolean isCoop) {
-        return isCoop ? FILE_PATH_COOP : FILE_PATH;
+    private static File getFile(boolean isCoop) {
+        return new File(GameConfig.getBaseDirectory(), isCoop ? FILE_NAME_COOP : FILE_NAME);
     }
 
     public static List<ScoreEntry> loadTopScores(boolean isCoop) {
         List<ScoreEntry> scores = new ArrayList<>();
-        File file = new File(getFilePath(isCoop));
+        File file = getFile(isCoop);
         if (!file.exists()) {
             return scores;
         }
@@ -83,7 +83,7 @@ public class LeaderboardManager {
             scores = scores.subList(0, MAX_SCORES);
         }
 
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(getFilePath(isCoop)))) {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(getFile(isCoop)))) {
             for (ScoreEntry entry : scores) {
                 if (isCoop) {
                     bw.write(entry.name + "," + entry.score + "," + entry.characterType + "," + entry.characterType2);
