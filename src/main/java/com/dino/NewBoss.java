@@ -15,7 +15,7 @@ public class NewBoss extends Boss {
     private State currentState = State.IDLE;
     private double startY;
     private double targetY;
-    private double dashSpeed = 1000.0; // 快速衝刺速度
+    private double dashSpeed = GameConfig.NEW_BOSS_DASH_SPEED; // 快速衝刺速度
 
     // Clone fields (for Stage 2)
     private ImageView cloneVisual;
@@ -28,14 +28,14 @@ public class NewBoss extends Boss {
     private boolean cloneDashing = false;
 
     // Timing constants
-    private static final long IDLE_DURATION = 2000;   // 等大概兩次玩家的攻擊時間 (2秒)
-    private static final long SHIFT_DURATION = 500;   // Y軸位移準備時間 (0.5秒)
-    private static final double CLONE_DELAY_SECS = 0.4; // 分身延遲衝刺時間 (0.4秒)
+    private static final long IDLE_DURATION = GameConfig.NEW_BOSS_IDLE_DURATION_MS;   // 等大概兩次玩家的攻擊時間 (2秒)
+    private static final long SHIFT_DURATION = GameConfig.NEW_BOSS_SHIFT_DURATION_MS;   // Y軸位移準備時間 (0.5秒)
+    private static final double CLONE_DELAY_SECS = GameConfig.NEW_BOSS_CLONE_DELAY_SECS; // 分身延遲衝刺時間 (0.4秒)
 
     // Death transition
     private boolean isDead = false;
     private long deathTime = 0;
-    private static final long DEATH_DURATION = 1500; // 死亡變為 BIND 圖片，停留 1.5 秒
+    private static final long DEATH_DURATION = GameConfig.NEW_BOSS_DEATH_DURATION_MS; // 死亡變為 BIND 圖片，停留 1.5 秒
 
     // Positions
     private final double X_START = screenWidth - 150;
@@ -43,8 +43,8 @@ public class NewBoss extends Boss {
     private final double Y_MID = groundY - height - 30;
 
     public NewBoss(Pane root, long activeGameTime, boolean isCoop) {
-        // Hollow Knight: width=100 (拉寬), height=90, HP=120
-        super(root, activeGameTime, isCoop, 100, 90, 120);
+        // Hollow Knight: width=100 (拉寬), height=90, 根據單雙人設定 HP
+        super(root, activeGameTime, isCoop, 100, 90, isCoop ? GameConfig.NEW_BOSS_HP_COOP : GameConfig.NEW_BOSS_HP);
 
         // Flip boss visual horizontally (橫向反轉)
         visual.setScaleX(-1);

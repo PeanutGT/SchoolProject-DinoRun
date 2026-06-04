@@ -40,6 +40,15 @@ public class GameConfig {
     public static final double BOSS_BULLET_SPEED_COOP = 6 * 60;
     public static final double BOSS_SHOCKWAVE_SPEED_COOP = 7 * 60;
 
+    // New Boss (空洞騎士) 參數設定
+    public static final int NEW_BOSS_HP = 120;
+    public static final int NEW_BOSS_HP_COOP = 240;
+    public static final double NEW_BOSS_DASH_SPEED = 1000.0;
+    public static final long NEW_BOSS_IDLE_DURATION_MS = 2000;
+    public static final long NEW_BOSS_SHIFT_DURATION_MS = 500;
+    public static final double NEW_BOSS_CLONE_DELAY_SECS = 0.4;
+    public static final long NEW_BOSS_DEATH_DURATION_MS = 1500;
+
     // 技能與道具設定
     public static final double SWORD_ATTACK_RANGE = 600;
     public static final int OBSTACLE_CLEAR_SCORE = 50;
